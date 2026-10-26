@@ -69,10 +69,17 @@
 
   function positionNear(pop, anchorEl) {
     const rect = anchorEl.getBoundingClientRect();
-    pop.style.position = "fixed";
-    pop.style.top = Math.min(rect.bottom + 6, window.innerHeight - 20) + "px";
+    const scrollX = window.scrollX || window.pageXOffset;
+    const scrollY = window.scrollY || window.pageYOffset;
+    // Positioned relative to the document (not the viewport) so the
+    // popover scrolls together with the button it's anchored to, instead
+    // of staying fixed on screen while the page scrolls underneath it.
+    pop.style.position = "absolute";
+    const top = Math.min(rect.bottom + 6, window.innerHeight - 20);
+    pop.style.top = top + scrollY + "px";
     const maxLeft = window.innerWidth - 272;
-    pop.style.left = Math.max(8, Math.min(rect.left, maxLeft)) + "px";
+    const left = Math.max(8, Math.min(rect.left, maxLeft));
+    pop.style.left = left + scrollX + "px";
   }
 
   function openPopover(anchorEl, buildFn) {

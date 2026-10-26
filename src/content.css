@@ -259,7 +259,7 @@
 /* popovers */
 
 .ghrf-popover {
-  position: fixed;
+  position: absolute;
   z-index: 10000;
   width: 240px;
   max-height: 320px;
