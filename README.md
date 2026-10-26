@@ -44,6 +44,9 @@ your browser except through Chrome's own sync mechanism (opt-in, see
 - **Staleness indicator** — a colored dot next to "Updated X ago", purely
   derived from what GitHub already shows (no extra API calls), with
   adjustable thresholds and colors
+- **Keyboard shortcuts** — hover a repo and press 1-9 to toggle it into the
+  Nth folder, with an optional required modifier key (Alt/Shift) configurable
+  in Settings
 
 ## Install (developer mode)
 

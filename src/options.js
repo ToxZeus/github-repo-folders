@@ -17,6 +17,9 @@
     stalenessColorFresh: document.getElementById("stalenessColorFresh"),
     stalenessColorWarning: document.getElementById("stalenessColorWarning"),
     stalenessColorStale: document.getElementById("stalenessColorStale"),
+    shortcutsEnabled: document.getElementById("shortcutsEnabled"),
+    shortcutsShowNumberBadges: document.getElementById("shortcutsShowNumberBadges"),
+    shortcutsModifier: document.getElementById("shortcutsModifier"),
     saveBtn: document.getElementById("saveBtn"),
     savedNote: document.getElementById("savedNote")
   };
@@ -96,6 +99,10 @@
     els.stalenessColorFresh.value = settings.staleness.colors.fresh;
     els.stalenessColorWarning.value = settings.staleness.colors.warning;
     els.stalenessColorStale.value = settings.staleness.colors.stale;
+
+    els.shortcutsEnabled.checked = settings.shortcuts.enabled;
+    els.shortcutsShowNumberBadges.checked = settings.shortcuts.showNumberBadges;
+    els.shortcutsModifier.value = settings.shortcuts.modifier;
   }
 
   els.saveBtn.addEventListener("click", async () => {
@@ -120,6 +127,11 @@
           warning: els.stalenessColorWarning.value,
           stale: els.stalenessColorStale.value
         }
+      },
+      shortcuts: {
+        enabled: els.shortcutsEnabled.checked,
+        showNumberBadges: els.shortcutsShowNumberBadges.checked,
+        modifier: els.shortcutsModifier.value
       }
     });
     loadedStoragePreference = next.storagePreference;

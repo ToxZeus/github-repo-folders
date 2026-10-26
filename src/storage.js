@@ -61,6 +61,11 @@
       freshDays: 30,
       staleDays: 180,
       colors: { fresh: "#1a7f37", warning: "#9a6700", stale: "#d1242f" }
+    },
+    shortcuts: {
+      enabled: true,
+      showNumberBadges: true,
+      modifier: "none" // "none" | "alt" | "shift"
     }
   };
 
@@ -111,6 +116,18 @@
       staleness.staleDays = staleness.freshDays;
     }
 
+    const shortcutsIn = s.shortcuts && typeof s.shortcuts === "object" ? s.shortcuts : {};
+    const shortcuts = {
+      enabled: shortcutsIn.enabled !== undefined ? Boolean(shortcutsIn.enabled) : DEFAULT_SETTINGS.shortcuts.enabled,
+      showNumberBadges:
+        shortcutsIn.showNumberBadges !== undefined
+          ? Boolean(shortcutsIn.showNumberBadges)
+          : DEFAULT_SETTINGS.shortcuts.showNumberBadges,
+      modifier: ["none", "alt", "shift"].includes(shortcutsIn.modifier)
+        ? shortcutsIn.modifier
+        : DEFAULT_SETTINGS.shortcuts.modifier
+    };
+
     return {
       badgeMetric,
       renderDebounceMs: clampNumber(s.renderDebounceMs, 50, 2000, DEFAULT_SETTINGS.renderDebounceMs),
@@ -120,7 +137,8 @@
       defaultPalette,
       searchMatchLanguageToo: Boolean(s.searchMatchLanguageToo),
       notes,
-      staleness
+      staleness,
+      shortcuts
     };
   }
 

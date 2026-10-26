@@ -52,6 +52,9 @@ ci-dessous).
 - **Indicateur de fraîcheur** — un point coloré à côté de "Mis à jour il y
   a...", purement dérivé de ce que GitHub affiche déjà (aucun appel API
   supplémentaire), avec seuils et couleurs ajustables
+- **Raccourcis clavier** — survole un repo et appuie sur 1-9 pour
+  l'assigner au dossier correspondant, avec une touche modificatrice
+  optionnelle (Alt/Maj) ajustable dans les Réglages
 
 ## Installation (mode développeur)
 

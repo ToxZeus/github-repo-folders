@@ -116,6 +116,32 @@
         </div>
       </section>
 
+      <section class="ghrf-settings-section">
+        <h2>Raccourcis clavier</h2>
+
+        <label class="ghrf-field ghrf-field-checkbox">
+          <input type="checkbox" id="shortcutsEnabled" />
+          <span>Survoler un repo + appuyer sur une touche 1-9 pour l'assigner au dossier correspondant</span>
+        </label>
+
+        <label class="ghrf-field ghrf-field-checkbox">
+          <input type="checkbox" id="shortcutsShowNumberBadges" />
+          <span>Afficher le numéro sur chaque chip de dossier</span>
+        </label>
+
+        <label class="ghrf-field">
+          <span class="ghrf-field-label">Touche modificatrice requise</span>
+          <select id="shortcutsModifier">
+            <option value="none">Aucune (juste le chiffre)</option>
+            <option value="alt">Alt + chiffre</option>
+            <option value="shift">Maj + chiffre</option>
+          </select>
+          <span class="ghrf-hint">
+            "Aucune" est le plus rapide mais le plus susceptible d'entrer en collision avec d'autres raccourcis.
+          </span>
+        </label>
+      </section>
+
       <div class="ghrf-save-row">
         <button type="button" id="saveBtn" class="ghrf-btn ghrf-btn-primary">Enregistrer</button>
         <span id="savedNote" class="ghrf-hint ghrf-hidden">Enregistré ✓</span>

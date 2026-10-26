@@ -80,6 +80,20 @@
   display: inline-block;
 }
 
+.ghrf-chip-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--bgColor-muted, #f6f8fa);
+  color: var(--fgColor-muted, #59636e);
+  font-size: 10px;
+  line-height: 1;
+  flex: none;
+}
+
 .ghrf-chip-count {
   color: var(--fgColor-muted, #59636e);
   font-size: 11px;

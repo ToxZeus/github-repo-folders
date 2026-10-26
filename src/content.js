@@ -34,6 +34,7 @@
   let debounceTimer = null;
   let outsideCloseHandler = null;
   let escCloseHandler = null;
+  let hoveredFullName = null;
 
   // Cached rather than fetched per-render: renderAll() runs on every
   // ~200ms debounce tick and 1.5s safety interval, and most of these
@@ -524,10 +525,17 @@
     });
     chipsRow.appendChild(allChip);
 
-    data.folders.forEach((folder) => {
+    data.folders.forEach((folder, folderIdx) => {
       const count = Object.values(data.assignments).filter((ids) => ids.includes(folder.id)).length;
       const chip = document.createElement("div");
       chip.className = "ghrf-chip" + (state.activeFolderId === folder.id ? " active" : "");
+
+      if (currentSettings().shortcuts.showNumberBadges && folderIdx < 9) {
+        const numBadge = document.createElement("span");
+        numBadge.className = "ghrf-chip-num";
+        numBadge.textContent = String(folderIdx + 1);
+        chip.appendChild(numBadge);
+      }
 
       const dot = document.createElement("span");
       dot.className = "ghrf-chip-dot";
@@ -780,6 +788,18 @@
         });
         row.addEventListener("dragend", () => row.classList.remove("ghrf-dragging"));
 
+        // Hover tracking for the 1-9 keyboard shortcut. Bound only on repo
+        // rows (never on the rest of github.com, since this whole block
+        // only ever runs for rows under an active adapter's container) —
+        // that alone is what keeps the global keydown listener below from
+        // ever firing outside the Repositories/Stars tabs.
+        row.addEventListener("mouseenter", () => {
+          hoveredFullName = row.dataset.ghrfRepo;
+        });
+        row.addEventListener("mouseleave", () => {
+          if (hoveredFullName === row.dataset.ghrfRepo) hoveredFullName = null;
+        });
+
         const controls = document.createElement("div");
         controls.className = "ghrf-repo-controls";
 
@@ -958,6 +978,12 @@
         toolbarEl = null;
         toolbarForContainer = null;
       }
+      // A Turbo navigation away from Repositories/Stars can remove a
+      // hovered row without ever firing its mouseleave (DOM swap, not a
+      // real pointer move) — without this, a stale hoveredFullName could
+      // make the 1-9 shortcut fire against a repo the user can no longer
+      // even see.
+      hoveredFullName = null;
       return;
     }
     const { adapter, container } = active;
@@ -986,6 +1012,34 @@
 
   document.addEventListener("turbo:load", scheduleRender);
   document.addEventListener("turbo:render", scheduleRender);
+
+  // Keyboard shortcut: hover a repo row + press 1-9 to toggle it into the
+  // Nth folder. This listener is global (content.js runs on every
+  // github.com page, not just Repositories/Stars) but is inert everywhere
+  // else, because `hoveredFullName` can only ever be set by the mouseenter
+  // handlers bound above, which only exist on repo rows.
+  document.addEventListener("keydown", async (e) => {
+    const shortcuts = currentSettings().shortcuts;
+    if (!shortcuts.enabled || !hoveredFullName || state.selectMode) return;
+
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+    const modifierOk =
+      shortcuts.modifier === "alt" ? e.altKey : shortcuts.modifier === "shift" ? e.shiftKey : !e.altKey && !e.shiftKey;
+    if (!modifierOk) return;
+
+    const n = Number(e.key);
+    if (!Number.isInteger(n) || n < 1 || n > 9) return;
+
+    const data = await window.GHRF.getData();
+    const folder = data.folders[n - 1];
+    if (!folder) return;
+
+    e.preventDefault();
+    await window.GHRF.toggleAssignment(hoveredFullName, folder.id);
+    renderAll();
+  });
 
   // Re-render when data changes elsewhere (another tab, or a pull from sync
   // after an edit made on a different device) — also the trigger for
