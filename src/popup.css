@@ -49,6 +49,11 @@ body {
   font-size: 12px;
 }
 
+.ghrf-sync-note {
+  color: var(--fg-muted);
+  font-size: 11px;
+}
+
 .ghrf-folder-list {
   display: flex;
   flex-direction: column;

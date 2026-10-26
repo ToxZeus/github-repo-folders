@@ -31,9 +31,10 @@
   async function render() {
     const data = await window.GHRF.getData();
     const repoCount = Object.keys(data.assignments).length;
+    const pinnedCount = (data.pinned || []).length;
     statsEl.textContent = `${data.folders.length} dossier${data.folders.length > 1 ? "s" : ""} · ${repoCount} repo${
       repoCount > 1 ? "s" : ""
-    } classé${repoCount > 1 ? "s" : ""}`;
+    } classé${repoCount > 1 ? "s" : ""} · ${pinnedCount} épinglé${pinnedCount > 1 ? "s" : ""}`;
 
     folderListEl.innerHTML = "";
     if (data.folders.length === 0) {
@@ -161,4 +162,11 @@
   });
 
   render();
+
+  // Live refresh if data changes elsewhere (e.g. a sync pull from another
+  // device), but don't yank the UI out from under an in-progress edit.
+  window.GHRF.onChange(() => {
+    if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+    render();
+  });
 })();

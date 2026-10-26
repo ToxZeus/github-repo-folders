@@ -9,6 +9,11 @@
     '<path d="M1.75 2A1.75 1.75 0 0 0 0 3.75v8.5A1.75 1.75 0 0 0 1.75 14h12.5A1.75 1.75 0 0 0 16 12.25v-7.5A1.75 1.75 0 0 0 14.25 3H8.19a.25.25 0 0 1-.177-.073L6.927 1.84A1.75 1.75 0 0 0 5.683 1.3H1.75Z"></path>' +
     "</svg>";
 
+  const STAR_ICON_SVG =
+    '<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">' +
+    '<path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"></path>' +
+    "</svg>";
+
   const state = { activeFolderId: null, language: "", hideArchived: false, hideForks: false };
   let toolbarEl = null;
   let debounceTimer = null;
@@ -248,6 +253,32 @@
 
   // ---------- rendering ----------
 
+  function applyPinnedOrder(container, pinned) {
+    const ul = container.querySelector("ul");
+    if (!ul) return;
+    const oldHeading = ul.querySelector(".ghrf-pinned-heading-row");
+    if (oldHeading) oldHeading.remove();
+
+    const pinnedSet = new Set(pinned || []);
+    const items = Array.from(container.querySelectorAll('li[itemprop="owns"]'));
+    const visible = items.filter((li) => li.style.display !== "none");
+    const pinnedVisible = visible.filter((li) => pinnedSet.has(li.dataset.ghrfRepo));
+    const restVisible = visible.filter((li) => !pinnedSet.has(li.dataset.ghrfRepo));
+    if (pinnedVisible.length === 0 || restVisible.length === 0) return;
+
+    const heading = document.createElement("li");
+    heading.className = "ghrf-pinned-heading-row";
+    heading.style.listStyle = "none";
+    const headingLabel = document.createElement("div");
+    headingLabel.className = "ghrf-pinned-heading";
+    headingLabel.textContent = "★ Épinglés";
+    heading.appendChild(headingLabel);
+
+    pinnedVisible.forEach((li) => ul.appendChild(li));
+    ul.appendChild(heading);
+    restVisible.forEach((li) => ul.appendChild(li));
+  }
+
   function applyFilters(container) {
     window.GHRF.getData().then((data) => {
       const items = container.querySelectorAll('li[itemprop="owns"]');
@@ -272,6 +303,7 @@
         }
         if (visible) shown++;
       });
+      applyPinnedOrder(container, data.pinned);
       const countLabel = toolbarEl && toolbarEl.querySelector(".ghrf-count-label");
       if (countLabel) {
         countLabel.textContent = `${shown} / ${items.length} repo${items.length > 1 ? "s" : ""} affiché${
@@ -414,6 +446,11 @@
 
     toolbarEl.appendChild(filtersRow);
 
+    const syncNote = document.createElement("div");
+    syncNote.className = "ghrf-sync-note";
+    syncNote.textContent = "🔄 Dossiers synchronisés via ton compte Chrome";
+    toolbarEl.appendChild(syncNote);
+
     applyFilters(container);
   }
 
@@ -437,6 +474,20 @@
 
         const controls = document.createElement("div");
         controls.className = "ghrf-repo-controls";
+
+        const pinBtn = document.createElement("button");
+        pinBtn.type = "button";
+        pinBtn.className = "ghrf-pin-btn";
+        pinBtn.title = "Épingler ce repo";
+        pinBtn.innerHTML = STAR_ICON_SVG;
+        pinBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          await window.GHRF.togglePin(li.dataset.ghrfRepo);
+          renderAll();
+        });
+        controls.appendChild(pinBtn);
+
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "ghrf-badge-btn";
@@ -470,6 +521,13 @@
           dot.title = folder.name;
           dotsEl.appendChild(dot);
         });
+      }
+
+      const isPinned = (data.pinned || []).includes(info.fullName);
+      const pinBtn = li.querySelector(".ghrf-pin-btn");
+      if (pinBtn) {
+        pinBtn.classList.toggle("pinned", isPinned);
+        pinBtn.title = isPinned ? "Désépingler ce repo" : "Épingler ce repo";
       }
     });
   }
@@ -516,6 +574,10 @@
 
   document.addEventListener("turbo:load", scheduleRender);
   document.addEventListener("turbo:render", scheduleRender);
+
+  // Re-render when data changes elsewhere (another tab, or a pull from sync
+  // after an edit made on a different device).
+  window.GHRF.onChange(scheduleRender);
 
   // Safety net: GitHub's soft navigation can occasionally swap the repo
   // list without the toolbar surviving; this catches that within ~1.5s.
