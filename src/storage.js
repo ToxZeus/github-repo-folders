@@ -160,6 +160,18 @@
     return folder;
   }
 
+  async function reorderFolders(orderedIds) {
+    const data = await getData();
+    const byId = new Map(data.folders.map((f) => [f.id, f]));
+    const reordered = orderedIds.map((id) => byId.get(id)).filter(Boolean);
+    data.folders.forEach((f) => {
+      if (!orderedIds.includes(f.id)) reordered.push(f);
+    });
+    data.folders = reordered;
+    await setData(data);
+    return data;
+  }
+
   async function renameFolder(id, name) {
     const data = await getData();
     const f = data.folders.find((x) => x.id === id);
@@ -289,6 +301,7 @@
     getData,
     setData,
     addFolder,
+    reorderFolders,
     renameFolder,
     recolorFolder,
     deleteFolder,

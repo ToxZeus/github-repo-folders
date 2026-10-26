@@ -17,6 +17,10 @@ your browser except through Chrome's own sync mechanism (opt-in, see
 - **Drag & drop** a repo onto a folder, or use the 📁 button on each repo
 - **Filters** — by folder, by language, hide forks/archived repos
 - **Pin favorites** (⭐) — pinned repos float to the top of the visible list
+- **Instant search** — filter the repo list by name as you type, combinable
+  with the folder/language/archived/fork filters
+- **Reorder folders** — drag a folder chip to change its display order
+- **Icon badge** — the number of pinned repos shows directly on the toolbar icon
 - **Custom colors** per folder
 - **Cross-device sync** via `chrome.storage.sync` (follows your Chrome profile)
 - **JSON export/import** for manual backup or transfer
@@ -78,6 +82,9 @@ Plain JavaScript (no build step, no framework), Manifest V3:
   used by both the content script and the popup.
 - `src/popup.html` / `src/popup.js` — the toolbar-icon popup for managing
   folders, stats, and import/export.
+- `src/background.js` — a classic (non-module) service worker that reuses
+  `storage.js` via `importScripts` to keep the toolbar icon's badge (pinned
+  repo count) in sync.
 
 ## Feedback
 

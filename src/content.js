@@ -14,7 +14,9 @@
     '<path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"></path>' +
     "</svg>";
 
-  const state = { activeFolderId: null, language: "", hideArchived: false, hideForks: false };
+  const FOLDER_REORDER_MIME = "application/x-ghrf-folder-id";
+
+  const state = { activeFolderId: null, language: "", hideArchived: false, hideForks: false, searchQuery: "" };
   let toolbarEl = null;
   let debounceTimer = null;
   let outsideCloseHandler = null;
@@ -294,6 +296,10 @@
         if (visible && state.language && info.language !== state.language) visible = false;
         if (visible && state.hideArchived && info.isArchived) visible = false;
         if (visible && state.hideForks && info.isFork) visible = false;
+        if (visible && state.searchQuery) {
+          const q = state.searchQuery.trim().toLowerCase();
+          if (q && !info.fullName.toLowerCase().includes(q)) visible = false;
+        }
         if (visible) {
           li.style.removeProperty("display");
         } else {
@@ -314,6 +320,11 @@
   }
 
   function renderToolbar(data, container) {
+    const prevSearch = toolbarEl.querySelector(".ghrf-search-input");
+    const searchHadFocus = !!prevSearch && prevSearch === document.activeElement;
+    const searchSelStart = searchHadFocus ? prevSearch.selectionStart : null;
+    const searchSelEnd = searchHadFocus ? prevSearch.selectionEnd : null;
+
     toolbarEl.innerHTML = "";
 
     const chipsRow = document.createElement("div");
@@ -365,6 +376,17 @@
         renderAll();
       });
 
+      // Dragging the chip itself reorders folders; dropping a repo <li> onto
+      // it (existing behaviour) assigns that repo. Distinct dataTransfer
+      // types keep the two gestures from colliding on the same element.
+      chip.draggable = true;
+      chip.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData(FOLDER_REORDER_MIME, folder.id);
+        e.dataTransfer.effectAllowed = "move";
+        chip.classList.add("ghrf-chip-dragging");
+      });
+      chip.addEventListener("dragend", () => chip.classList.remove("ghrf-chip-dragging"));
+
       chip.addEventListener("dragover", (e) => {
         e.preventDefault();
         chip.classList.add("ghrf-drop-hover");
@@ -373,6 +395,23 @@
       chip.addEventListener("drop", async (e) => {
         e.preventDefault();
         chip.classList.remove("ghrf-drop-hover");
+
+        const draggedFolderId = e.dataTransfer.getData(FOLDER_REORDER_MIME);
+        if (draggedFolderId) {
+          if (draggedFolderId !== folder.id) {
+            const orderedIds = data.folders.map((f) => f.id);
+            const fromIdx = orderedIds.indexOf(draggedFolderId);
+            const toIdx = orderedIds.indexOf(folder.id);
+            if (fromIdx !== -1 && toIdx !== -1) {
+              orderedIds.splice(fromIdx, 1);
+              orderedIds.splice(toIdx, 0, draggedFolderId);
+              await window.GHRF.reorderFolders(orderedIds);
+              renderAll();
+            }
+          }
+          return;
+        }
+
         const fullName = e.dataTransfer.getData("text/plain");
         if (!fullName) return;
         await window.GHRF.addAssignment(fullName, folder.id);
@@ -393,6 +432,22 @@
 
     const filtersRow = document.createElement("div");
     filtersRow.className = "ghrf-filters";
+
+    const searchInput = document.createElement("input");
+    searchInput.type = "search";
+    searchInput.className = "ghrf-search-input";
+    searchInput.placeholder = "Rechercher un repo...";
+    searchInput.setAttribute("aria-label", "Rechercher un repo par nom");
+    searchInput.value = state.searchQuery;
+    searchInput.addEventListener("input", () => {
+      state.searchQuery = searchInput.value;
+      applyFilters(container);
+    });
+    filtersRow.appendChild(searchInput);
+    if (searchHadFocus) {
+      searchInput.focus();
+      searchInput.setSelectionRange(searchSelStart, searchSelEnd);
+    }
 
     const langSelect = document.createElement("select");
     langSelect.className = "ghrf-lang-select";

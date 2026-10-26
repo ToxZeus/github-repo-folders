@@ -20,6 +20,12 @@ ci-dessous).
 - **Filtres** — par dossier, par langage, masquage des forks/archivés
 - **Favoris épinglés** (⭐) — les repos épinglés remontent en haut de la liste
   visible
+- **Recherche instantanée** — filtre la liste par nom au fur et à mesure de
+  la frappe, combinable avec les filtres dossier/langage/archivé/fork
+- **Réordonner les dossiers** — glisse une chip dossier pour changer son
+  ordre d'affichage
+- **Badge sur l'icône** — le nombre de repos épinglés s'affiche directement
+  sur l'icône de la barre d'outils
 - **Couleurs personnalisables** par dossier
 - **Synchronisation entre appareils** via `chrome.storage.sync` (liée à ton
   compte Chrome)
@@ -85,6 +91,9 @@ JavaScript simple (sans build, sans framework), Manifest V3 :
   `local`), utilisée à la fois par le script de contenu et la popup.
 - `src/popup.html` / `src/popup.js` — popup de l'icône pour gérer les
   dossiers, voir les statistiques, et importer/exporter.
+- `src/background.js` — service worker classique (non-module) qui réutilise
+  `storage.js` via `importScripts` pour garder à jour le badge de l'icône
+  (nombre de repos épinglés).
 
 ## Retours
 

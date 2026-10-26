@@ -56,6 +56,21 @@
   box-shadow: 0 0 0 2px var(--bgColor-success-muted, #d4f8d4);
 }
 
+.ghrf-chip.ghrf-chip-dragging {
+  opacity: 0.5;
+}
+
+.ghrf-search-input {
+  height: 26px;
+  min-width: 160px;
+  border-radius: 6px;
+  border: 1px solid var(--borderColor-default, #d1d9e0);
+  background: var(--bgColor-default, #fff);
+  color: var(--fgColor-default, #1f2328);
+  font-size: 12px;
+  padding: 0 8px;
+}
+
 .ghrf-chip-dot,
 .ghrf-dot {
   width: 8px;
