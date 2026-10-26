@@ -115,6 +115,7 @@
       input.type = "text";
       input.className = "ghrf-popover-input";
       input.placeholder = "Ex : VPS, École, Perso...";
+      input.setAttribute("aria-label", "Nom du nouveau dossier");
       input.maxLength = 40;
       pop.appendChild(input);
 
@@ -160,6 +161,7 @@
       input.type = "text";
       input.className = "ghrf-popover-input";
       input.value = folder.name;
+      input.setAttribute("aria-label", "Nom du dossier");
       input.maxLength = 40;
       pop.appendChild(input);
 
@@ -261,7 +263,13 @@
         if (visible && state.language && info.language !== state.language) visible = false;
         if (visible && state.hideArchived && info.isArchived) visible = false;
         if (visible && state.hideForks && info.isFork) visible = false;
-        li.style.display = visible ? "" : "none";
+        if (visible) {
+          li.style.removeProperty("display");
+        } else {
+          // GitHub's own ".d-flex{display:flex!important}" class on these
+          // <li> elements beats a plain inline style, so force ours too.
+          li.style.setProperty("display", "none", "important");
+        }
         if (visible) shown++;
       });
       const countLabel = toolbarEl && toolbarEl.querySelector(".ghrf-count-label");
@@ -356,6 +364,7 @@
 
     const langSelect = document.createElement("select");
     langSelect.className = "ghrf-lang-select";
+    langSelect.setAttribute("aria-label", "Filtrer par langage");
     const optAll = document.createElement("option");
     optAll.value = "";
     optAll.textContent = "Tous les langages";

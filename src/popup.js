@@ -60,6 +60,7 @@
       nameField.type = "text";
       nameField.className = "ghrf-name-field";
       nameField.value = folder.name;
+      nameField.setAttribute("aria-label", "Nom du dossier");
       nameField.maxLength = 40;
       nameField.addEventListener("change", async () => {
         const v = nameField.value.trim();

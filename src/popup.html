@@ -13,7 +13,13 @@
       <div id="folderList" class="ghrf-folder-list"></div>
 
       <div class="ghrf-new-folder">
-        <input id="newFolderName" type="text" placeholder="Nouveau dossier..." maxlength="40" />
+        <input
+          id="newFolderName"
+          type="text"
+          placeholder="Nouveau dossier..."
+          aria-label="Nom du nouveau dossier"
+          maxlength="40"
+        />
         <div id="newFolderSwatches" class="ghrf-swatches"></div>
         <button id="createFolderBtn" class="ghrf-btn ghrf-btn-primary" type="button">Créer</button>
       </div>
@@ -22,7 +28,7 @@
         <button id="exportBtn" class="ghrf-btn" type="button">Exporter (JSON)</button>
         <button id="importMergeBtn" class="ghrf-btn" type="button">Importer (fusion)</button>
         <button id="importReplaceBtn" class="ghrf-btn ghrf-btn-danger" type="button">Importer (remplacer)</button>
-        <input id="importFile" type="file" accept="application/json" hidden />
+        <input id="importFile" type="file" accept="application/json" aria-label="Choisir un fichier JSON à importer" hidden />
       </div>
 
       <p class="ghrf-hint">
