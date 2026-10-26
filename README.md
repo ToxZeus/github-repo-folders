@@ -21,6 +21,10 @@ your browser except through Chrome's own sync mechanism (opt-in, see
   with the folder/language/archived/fork filters
 - **Reorder folders** — drag a folder chip to change its display order
 - **Icon badge** — the number of pinned repos shows directly on the toolbar icon
+- **Right-click context menu** — add/remove any repo link, anywhere on
+  github.com, from a folder without opening the Repositories tab (the menu
+  is generic — "Add to X" / "Remove from X" — Chrome has no way to show a
+  live "already in this folder" state on a context menu)
 - **Custom colors** per folder
 - **Cross-device sync** via `chrome.storage.sync` (follows your Chrome profile)
 - **JSON export/import** for manual backup or transfer
@@ -84,7 +88,7 @@ Plain JavaScript (no build step, no framework), Manifest V3:
   folders, stats, and import/export.
 - `src/background.js` — a classic (non-module) service worker that reuses
   `storage.js` via `importScripts` to keep the toolbar icon's badge (pinned
-  repo count) in sync.
+  repo count) in sync, and to build/handle the right-click context menu.
 
 ## Feedback
 

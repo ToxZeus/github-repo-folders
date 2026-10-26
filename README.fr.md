@@ -26,6 +26,11 @@ ci-dessous).
   ordre d'affichage
 - **Badge sur l'icône** — le nombre de repos épinglés s'affiche directement
   sur l'icône de la barre d'outils
+- **Menu contextuel clic-droit** — ajoute/retire n'importe quel lien de repo,
+  n'importe où sur github.com, d'un dossier sans ouvrir l'onglet
+  Repositories (le menu est générique — « Ajouter à X » / « Retirer de X »
+  — Chrome ne permet pas d'afficher un état « déjà dans ce dossier » en
+  direct sur un menu contextuel)
 - **Couleurs personnalisables** par dossier
 - **Synchronisation entre appareils** via `chrome.storage.sync` (liée à ton
   compte Chrome)
@@ -93,7 +98,8 @@ JavaScript simple (sans build, sans framework), Manifest V3 :
   dossiers, voir les statistiques, et importer/exporter.
 - `src/background.js` — service worker classique (non-module) qui réutilise
   `storage.js` via `importScripts` pour garder à jour le badge de l'icône
-  (nombre de repos épinglés).
+  (nombre de repos épinglés), et pour construire/gérer le menu contextuel
+  clic-droit.
 
 ## Retours
 

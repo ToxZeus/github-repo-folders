@@ -227,6 +227,19 @@
     return data;
   }
 
+  async function removeAssignment(repoFullName, folderId) {
+    const data = await getData();
+    const current = data.assignments[repoFullName] || [];
+    const next = current.filter((id) => id !== folderId);
+    if (next.length) {
+      data.assignments[repoFullName] = next;
+    } else {
+      delete data.assignments[repoFullName];
+    }
+    await setData(data);
+    return data;
+  }
+
   async function togglePin(repoFullName) {
     const data = await getData();
     const pinned = new Set(data.pinned || []);
@@ -307,6 +320,7 @@
     deleteFolder,
     toggleAssignment,
     addAssignment,
+    removeAssignment,
     togglePin,
     exportJSON,
     importJSON,
