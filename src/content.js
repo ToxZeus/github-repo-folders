@@ -14,6 +14,11 @@
     '<path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"></path>' +
     "</svg>";
 
+  const NOTE_ICON_SVG =
+    '<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">' +
+    '<path d="M2.75 1.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75V5.56a.75.75 0 0 0-.22-.53l-3.81-3.81a.75.75 0 0 0-.53-.22H2.75Zm0 1.5h6v2.75c0 .414.336.75.75.75h2.75v7h-9.5v-10.5Zm7.5 1.06 1.69 1.69h-1.69V4.06ZM4.5 8.5h7v1h-7v-1Zm0 2.5h7v1h-7v-1Z"></path>' +
+    "</svg>";
+
   const FOLDER_REORDER_MIME = "application/x-ghrf-folder-id";
 
   const state = {
@@ -46,6 +51,19 @@
     settingsCache = await window.GHRF.getSettings();
   }
 
+  // Shared by both adapters: the "Updated X ago" <relative-time> element is
+  // present in both the Repositories and Stars markup, so staleness needs
+  // no adapter-specific code, just this one extraction helper called from
+  // each extractInfo.
+  function extractUpdatedAt(row) {
+    const el = row.querySelector("relative-time");
+    if (!el) return null;
+    const iso = el.getAttribute("datetime");
+    if (!iso) return null;
+    const date = new Date(iso);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
   // ---------- page adapters ----------
   // The Repositories tab and the Stars tab render repo lists with
   // completely different markup (the former is schema.org itemprop-based,
@@ -75,7 +93,7 @@
       const isFork = row.classList.contains("fork");
       const labels = Array.from(row.querySelectorAll("h3 .Label")).map((s) => s.textContent.trim());
       const isArchived = labels.includes("Archived");
-      return { fullName, language, isFork, isArchived };
+      return { fullName, language, isFork, isArchived, updatedAt: extractUpdatedAt(row) };
     }
   };
 
@@ -115,7 +133,7 @@
       if (!fullName || fullName.split("/").length !== 2) return null;
       const langEl = row.querySelector('[itemprop="programmingLanguage"]');
       const language = langEl ? langEl.textContent.trim() : "";
-      return { fullName, language, isFork: false, isArchived: false };
+      return { fullName, language, isFork: false, isArchived: false, updatedAt: extractUpdatedAt(row) };
     }
   };
 
@@ -347,6 +365,69 @@
         row.appendChild(document.createTextNode(folder.name));
         pop.appendChild(row);
       });
+    });
+  }
+
+  async function openNotePopover(anchorEl, fullName, onDone) {
+    const data = await window.GHRF.getData();
+    const settings = currentSettings();
+    const existing = (data.notes && data.notes[fullName]) || "";
+
+    openPopover(anchorEl, (pop) => {
+      pop.classList.add("ghrf-popover-form");
+
+      const title = document.createElement("div");
+      title.className = "ghrf-popover-title";
+      title.textContent = "Note";
+      pop.appendChild(title);
+
+      const textarea = document.createElement("textarea");
+      textarea.className = "ghrf-note-textarea";
+      textarea.value = existing;
+      textarea.maxLength = settings.notes.maxLength;
+      textarea.rows = 4;
+      textarea.setAttribute("aria-label", "Note pour ce repo");
+      textarea.placeholder = "Ex : renouveler en mars, demander à untel avant d'y toucher...";
+      pop.appendChild(textarea);
+
+      const counter = document.createElement("div");
+      counter.className = "ghrf-note-counter";
+      const updateCounter = () => {
+        counter.textContent = `${textarea.value.length} / ${settings.notes.maxLength}`;
+      };
+      updateCounter();
+      textarea.addEventListener("input", updateCounter);
+      pop.appendChild(counter);
+
+      const actions = document.createElement("div");
+      actions.className = "ghrf-popover-actions";
+
+      const saveBtn = document.createElement("button");
+      saveBtn.type = "button";
+      saveBtn.className = "ghrf-btn ghrf-btn-primary";
+      saveBtn.textContent = "Enregistrer";
+      saveBtn.addEventListener("click", async () => {
+        await window.GHRF.setNote(fullName, textarea.value);
+        closeAnyPopover();
+        onDone();
+      });
+      actions.appendChild(saveBtn);
+
+      if (existing) {
+        const clearBtn = document.createElement("button");
+        clearBtn.type = "button";
+        clearBtn.className = "ghrf-btn ghrf-btn-danger";
+        clearBtn.textContent = "Supprimer";
+        clearBtn.addEventListener("click", async () => {
+          await window.GHRF.clearNote(fullName);
+          closeAnyPopover();
+          onDone();
+        });
+        actions.appendChild(clearBtn);
+      }
+
+      pop.appendChild(actions);
+      setTimeout(() => textarea.focus(), 0);
     });
   }
 
@@ -739,6 +820,19 @@
           openAssignPopover(btn, row.dataset.ghrfRepo, renderAll);
         });
         controls.appendChild(btn);
+
+        const noteBtn = document.createElement("button");
+        noteBtn.type = "button";
+        noteBtn.className = "ghrf-note-btn";
+        noteBtn.title = "Ajouter une note";
+        noteBtn.innerHTML = NOTE_ICON_SVG;
+        noteBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openNotePopover(noteBtn, row.dataset.ghrfRepo, renderAll);
+        });
+        controls.appendChild(noteBtn);
+
         row.appendChild(controls);
 
         const titleEl = row.querySelector(adapter.titleSelector);
@@ -746,6 +840,13 @@
           const dots = document.createElement("span");
           dots.className = "ghrf-title-dots";
           titleEl.appendChild(dots);
+        }
+
+        const timeEl = row.querySelector("relative-time");
+        if (timeEl) {
+          const staleDot = document.createElement("span");
+          staleDot.className = "ghrf-dot ghrf-staleness-dot";
+          timeEl.insertAdjacentElement("afterend", staleDot);
         }
       }
 
@@ -768,6 +869,40 @@
       if (pinBtn) {
         pinBtn.classList.toggle("pinned", isPinned);
         pinBtn.title = isPinned ? "Désépingler ce repo" : "Épingler ce repo";
+      }
+
+      const hasNote = Boolean(data.notes && data.notes[info.fullName]);
+      const noteBtn = row.querySelector(".ghrf-note-btn");
+      if (noteBtn) {
+        const notesEnabled = currentSettings().notes.enabled;
+        noteBtn.style.display = notesEnabled ? "" : "none";
+        noteBtn.classList.toggle("has-note", hasNote);
+        noteBtn.title = hasNote ? "Modifier la note" : "Ajouter une note";
+      }
+
+      const staleDot = row.querySelector(".ghrf-staleness-dot");
+      if (staleDot) {
+        const staleness = currentSettings().staleness;
+        if (!staleness.enabled || !info.updatedAt) {
+          staleDot.style.display = "none";
+        } else {
+          const days = (Date.now() - info.updatedAt.getTime()) / 86400000;
+          let color;
+          let label;
+          if (days <= staleness.freshDays) {
+            color = staleness.colors.fresh;
+            label = "Mis à jour récemment";
+          } else if (days <= staleness.staleDays) {
+            color = staleness.colors.warning;
+            label = "Pas mis à jour depuis un moment";
+          } else {
+            color = staleness.colors.stale;
+            label = "Probablement à l'abandon";
+          }
+          staleDot.style.display = "";
+          staleDot.style.background = color;
+          staleDot.title = label;
+        }
       }
 
       const selectCb = row.querySelector(".ghrf-select-cb");

@@ -9,6 +9,14 @@
     paletteList: document.getElementById("paletteList"),
     addPaletteColorBtn: document.getElementById("addPaletteColorBtn"),
     resetPaletteBtn: document.getElementById("resetPaletteBtn"),
+    notesEnabled: document.getElementById("notesEnabled"),
+    notesMaxLength: document.getElementById("notesMaxLength"),
+    stalenessEnabled: document.getElementById("stalenessEnabled"),
+    stalenessFreshDays: document.getElementById("stalenessFreshDays"),
+    stalenessStaleDays: document.getElementById("stalenessStaleDays"),
+    stalenessColorFresh: document.getElementById("stalenessColorFresh"),
+    stalenessColorWarning: document.getElementById("stalenessColorWarning"),
+    stalenessColorStale: document.getElementById("stalenessColorStale"),
     saveBtn: document.getElementById("saveBtn"),
     savedNote: document.getElementById("savedNote")
   };
@@ -78,6 +86,16 @@
     els.searchMatchLanguageToo.checked = settings.searchMatchLanguageToo;
     paletteColors = settings.defaultPalette.slice();
     renderPaletteList();
+
+    els.notesEnabled.checked = settings.notes.enabled;
+    els.notesMaxLength.value = settings.notes.maxLength;
+
+    els.stalenessEnabled.checked = settings.staleness.enabled;
+    els.stalenessFreshDays.value = settings.staleness.freshDays;
+    els.stalenessStaleDays.value = settings.staleness.staleDays;
+    els.stalenessColorFresh.value = settings.staleness.colors.fresh;
+    els.stalenessColorWarning.value = settings.staleness.colors.warning;
+    els.stalenessColorStale.value = settings.staleness.colors.stale;
   }
 
   els.saveBtn.addEventListener("click", async () => {
@@ -88,7 +106,21 @@
       popoverWidth: Number(els.popoverWidth.value),
       storagePreference: els.storagePreference.value,
       searchMatchLanguageToo: els.searchMatchLanguageToo.checked,
-      defaultPalette: paletteColors
+      defaultPalette: paletteColors,
+      notes: {
+        enabled: els.notesEnabled.checked,
+        maxLength: Number(els.notesMaxLength.value)
+      },
+      staleness: {
+        enabled: els.stalenessEnabled.checked,
+        freshDays: Number(els.stalenessFreshDays.value),
+        staleDays: Number(els.stalenessStaleDays.value),
+        colors: {
+          fresh: els.stalenessColorFresh.value,
+          warning: els.stalenessColorWarning.value,
+          stale: els.stalenessColorStale.value
+        }
+      }
     });
     loadedStoragePreference = next.storagePreference;
     els.savedNote.classList.remove("ghrf-hidden");

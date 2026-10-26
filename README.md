@@ -39,6 +39,11 @@ your browser except through Chrome's own sync mechanism (opt-in, see
 - **Settings page** — badge metric, refresh timing, popover width, storage
   preference, default color palette, and search behavior are all adjustable
   (click the extension icon → ⚙)
+- **Per-repo notes** — a free-text note per repo (📝 button), capped length
+  configurable in Settings
+- **Staleness indicator** — a colored dot next to "Updated X ago", purely
+  derived from what GitHub already shows (no extra API calls), with
+  adjustable thresholds and colors
 
 ## Install (developer mode)
 

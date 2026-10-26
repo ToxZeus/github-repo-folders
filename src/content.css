@@ -206,7 +206,8 @@
 }
 
 .ghrf-badge-btn,
-.ghrf-pin-btn {
+.ghrf-pin-btn,
+.ghrf-note-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -220,7 +221,8 @@
 }
 
 .ghrf-badge-btn:hover,
-.ghrf-pin-btn:hover {
+.ghrf-pin-btn:hover,
+.ghrf-note-btn:hover {
   background: var(--bgColor-muted, #f6f8fa);
   border-color: var(--borderColor-default, #d1d9e0);
   color: var(--fgColor-default, #1f2328);
@@ -228,6 +230,19 @@
 
 .ghrf-pin-btn.pinned {
   color: var(--fgColor-attention, #9a6700);
+}
+
+.ghrf-note-btn.has-note {
+  color: var(--fgColor-accent, #0969da);
+}
+
+.ghrf-staleness-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 4px;
+  vertical-align: middle;
 }
 
 .ghrf-title-dots {
@@ -290,6 +305,25 @@
   color: var(--fgColor-default, #1f2328);
   padding: 0 8px;
   font-size: 13px;
+}
+
+.ghrf-note-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 1px solid var(--borderColor-default, #d1d9e0);
+  background: var(--bgColor-default, #fff);
+  color: var(--fgColor-default, #1f2328);
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.ghrf-note-counter {
+  text-align: right;
+  font-size: 11px;
+  color: var(--fgColor-muted, #59636e);
 }
 
 .ghrf-swatches {

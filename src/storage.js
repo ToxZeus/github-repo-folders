@@ -51,7 +51,17 @@
       "#6e7781",
       "#1a7f37"
     ],
-    searchMatchLanguageToo: false
+    searchMatchLanguageToo: false,
+    notes: {
+      enabled: true,
+      maxLength: 300
+    },
+    staleness: {
+      enabled: true,
+      freshDays: 30,
+      staleDays: 180,
+      colors: { fresh: "#1a7f37", warning: "#9a6700", stale: "#d1242f" }
+    }
   };
 
   function clampNumber(value, min, max, fallback) {
@@ -76,6 +86,31 @@
       Array.isArray(s.defaultPalette) && s.defaultPalette.length && s.defaultPalette.every(isHex)
         ? s.defaultPalette.slice(0, 20)
         : DEFAULT_SETTINGS.defaultPalette.slice();
+
+    const notesIn = s.notes && typeof s.notes === "object" ? s.notes : {};
+    const notes = {
+      enabled: notesIn.enabled !== undefined ? Boolean(notesIn.enabled) : DEFAULT_SETTINGS.notes.enabled,
+      maxLength: clampNumber(notesIn.maxLength, 20, 2000, DEFAULT_SETTINGS.notes.maxLength)
+    };
+
+    const staleIn = s.staleness && typeof s.staleness === "object" ? s.staleness : {};
+    const staleColorsIn = staleIn.colors && typeof staleIn.colors === "object" ? staleIn.colors : {};
+    const staleness = {
+      enabled: staleIn.enabled !== undefined ? Boolean(staleIn.enabled) : DEFAULT_SETTINGS.staleness.enabled,
+      freshDays: clampNumber(staleIn.freshDays, 1, 3650, DEFAULT_SETTINGS.staleness.freshDays),
+      staleDays: clampNumber(staleIn.staleDays, 1, 3650, DEFAULT_SETTINGS.staleness.staleDays),
+      colors: {
+        fresh: isHex(staleColorsIn.fresh) ? staleColorsIn.fresh : DEFAULT_SETTINGS.staleness.colors.fresh,
+        warning: isHex(staleColorsIn.warning) ? staleColorsIn.warning : DEFAULT_SETTINGS.staleness.colors.warning,
+        stale: isHex(staleColorsIn.stale) ? staleColorsIn.stale : DEFAULT_SETTINGS.staleness.colors.stale
+      }
+    };
+    if (staleness.freshDays > staleness.staleDays) {
+      // Keep the two thresholds honestly ordered rather than silently
+      // producing a range where nothing is ever "warning".
+      staleness.staleDays = staleness.freshDays;
+    }
+
     return {
       badgeMetric,
       renderDebounceMs: clampNumber(s.renderDebounceMs, 50, 2000, DEFAULT_SETTINGS.renderDebounceMs),
@@ -83,7 +118,9 @@
       popoverWidth: clampNumber(s.popoverWidth, 180, 400, DEFAULT_SETTINGS.popoverWidth),
       storagePreference,
       defaultPalette,
-      searchMatchLanguageToo: Boolean(s.searchMatchLanguageToo)
+      searchMatchLanguageToo: Boolean(s.searchMatchLanguageToo),
+      notes,
+      staleness
     };
   }
 
@@ -98,6 +135,20 @@
   function allChunkKeys() {
     const keys = [];
     for (let i = 0; i < CHUNK_COUNT; i++) keys.push(chunkKey(i));
+    return keys;
+  }
+
+  // Notes get their own parallel set of sharded keys rather than riding
+  // inside the assignments value shape, so none of the existing
+  // assignment call sites (toggleAssignment, addAssignment, assignMany,
+  // removeAssignment, every ".includes(folderId)" consumer) need to change.
+  function notesChunkKey(i) {
+    return `ghrf_notes_${i}_v1`;
+  }
+
+  function allNotesChunkKeys() {
+    const keys = [];
+    for (let i = 0; i < CHUNK_COUNT; i++) keys.push(notesChunkKey(i));
     return keys;
   }
 
@@ -127,7 +178,7 @@
   }
 
   function emptyData() {
-    return { folders: [], assignments: {}, pinned: [] };
+    return { folders: [], assignments: {}, pinned: [], notes: {} };
   }
 
   function genId() {
@@ -142,8 +193,16 @@
     return chunks;
   }
 
+  function splitNotesIntoChunks(notes) {
+    const chunks = Array.from({ length: CHUNK_COUNT }, () => ({}));
+    for (const [repo, text] of Object.entries(notes || {})) {
+      chunks[chunkIndexFor(repo)][repo] = text;
+    }
+    return chunks;
+  }
+
   async function readBulkData(area) {
-    const keys = [FOLDERS_KEY, PINNED_KEY, ...allChunkKeys()];
+    const keys = [FOLDERS_KEY, PINNED_KEY, ...allChunkKeys(), ...allNotesChunkKeys()];
     const res = await storageGet(area, keys);
     const folders = Array.isArray(res[FOLDERS_KEY]) ? res[FOLDERS_KEY] : null;
     const pinned = Array.isArray(res[PINNED_KEY]) ? res[PINNED_KEY] : [];
@@ -152,7 +211,12 @@
       const chunk = res[chunkKey(i)];
       if (chunk && typeof chunk === "object") Object.assign(assignments, chunk);
     }
-    return { folders, assignments, pinned };
+    const notes = {};
+    for (let i = 0; i < CHUNK_COUNT; i++) {
+      const chunk = res[notesChunkKey(i)];
+      if (chunk && typeof chunk === "object") Object.assign(notes, chunk);
+    }
+    return { folders, assignments, pinned, notes };
   }
 
   function buildBulkPayload(data) {
@@ -162,6 +226,9 @@
     };
     splitAssignmentsIntoChunks(data.assignments).forEach((chunk, i) => {
       payload[chunkKey(i)] = chunk;
+    });
+    splitNotesIntoChunks(data.notes).forEach((chunk, i) => {
+      payload[notesChunkKey(i)] = chunk;
     });
     return payload;
   }
@@ -194,7 +261,8 @@
     const migrated = {
       folders: old.folders,
       assignments: old.assignments || {},
-      pinned: Array.isArray(old.pinned) ? old.pinned : []
+      pinned: Array.isArray(old.pinned) ? old.pinned : [],
+      notes: old.notes && typeof old.notes === "object" ? old.notes : {}
     };
     await writeData(migrated);
     return migrated;
@@ -205,7 +273,12 @@
     const area = primaryAreaFor(settings.storagePreference);
     const current = await readBulkData(area);
     if (current.folders !== null) {
-      return { folders: current.folders, assignments: current.assignments, pinned: current.pinned };
+      return {
+        folders: current.folders,
+        assignments: current.assignments,
+        pinned: current.pinned,
+        notes: current.notes
+      };
     }
     const migrated = await migrateLegacyIfNeeded();
     return migrated || emptyData();
@@ -362,6 +435,24 @@
     return data;
   }
 
+  async function setNote(repoFullName, text) {
+    const data = await getData();
+    const settings = await getSettings();
+    const trimmed = (text || "").slice(0, settings.notes.maxLength);
+    data.notes = data.notes || {};
+    if (trimmed.trim()) {
+      data.notes[repoFullName] = trimmed;
+    } else {
+      delete data.notes[repoFullName];
+    }
+    await setData(data);
+    return data;
+  }
+
+  async function clearNote(repoFullName) {
+    return setNote(repoFullName, "");
+  }
+
   async function togglePin(repoFullName) {
     const data = await getData();
     const pinned = new Set(data.pinned || []);
@@ -386,9 +477,16 @@
       throw new Error("Fichier invalide : structure inattendue.");
     }
     const parsedPinned = Array.isArray(parsed.pinned) ? parsed.pinned : [];
+    // Older exports (pre-notes) simply don't have this field.
+    const parsedNotes = parsed.notes && typeof parsed.notes === "object" ? parsed.notes : {};
 
     if (mode === "replace") {
-      const replaced = { folders: parsed.folders, assignments: parsed.assignments, pinned: parsedPinned };
+      const replaced = {
+        folders: parsed.folders,
+        assignments: parsed.assignments,
+        pinned: parsedPinned,
+        notes: parsedNotes
+      };
       await setData(replaced);
       return getData();
     }
@@ -418,12 +516,24 @@
     parsedPinned.forEach((repo) => pinnedSet.add(repo));
     data.pinned = Array.from(pinnedSet);
 
+    data.notes = data.notes || {};
+    for (const [repo, text] of Object.entries(parsedNotes)) {
+      // Imported notes don't overwrite an existing note for the same repo.
+      if (!data.notes[repo]) data.notes[repo] = text;
+    }
+
     await setData(data);
     return getData();
   }
 
   function onChange(callback) {
-    const keysOfInterest = new Set([FOLDERS_KEY, PINNED_KEY, SETTINGS_KEY, ...allChunkKeys()]);
+    const keysOfInterest = new Set([
+      FOLDERS_KEY,
+      PINNED_KEY,
+      SETTINGS_KEY,
+      ...allChunkKeys(),
+      ...allNotesChunkKeys()
+    ]);
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName !== "sync" && areaName !== "local") return;
       const touched = Object.keys(changes).some((k) => keysOfInterest.has(k));
@@ -446,6 +556,8 @@
     assignMany,
     removeAssignment,
     togglePin,
+    setNote,
+    clearNote,
     exportJSON,
     importJSON,
     getSettings,

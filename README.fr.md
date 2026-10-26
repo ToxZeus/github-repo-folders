@@ -47,6 +47,11 @@ ci-dessous).
   largeur des popovers, préférence de stockage, palette par défaut et
   comportement de la recherche sont tous ajustables (icône de l'extension →
   ⚙)
+- **Notes par repo** — une note libre par repo (bouton 📝), longueur max
+  ajustable dans les Réglages
+- **Indicateur de fraîcheur** — un point coloré à côté de "Mis à jour il y
+  a...", purement dérivé de ce que GitHub affiche déjà (aucun appel API
+  supplémentaire), avec seuils et couleurs ajustables
 
 ## Installation (mode développeur)
 

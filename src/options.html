@@ -73,6 +73,49 @@
         </div>
       </section>
 
+      <section class="ghrf-settings-section">
+        <h2>Notes</h2>
+
+        <label class="ghrf-field ghrf-field-checkbox">
+          <input type="checkbox" id="notesEnabled" />
+          <span>Afficher le bouton note sur chaque repo</span>
+        </label>
+
+        <label class="ghrf-field">
+          <span class="ghrf-field-label">Longueur maximale d'une note (caractères)</span>
+          <input type="number" id="notesMaxLength" min="20" max="2000" step="20" />
+        </label>
+      </section>
+
+      <section class="ghrf-settings-section">
+        <h2>Indicateur de fraîcheur</h2>
+
+        <label class="ghrf-field ghrf-field-checkbox">
+          <input type="checkbox" id="stalenessEnabled" />
+          <span>Afficher un point coloré selon la date de dernière mise à jour</span>
+        </label>
+
+        <label class="ghrf-field">
+          <span class="ghrf-field-label">Considéré "récent" jusqu'à (jours)</span>
+          <input type="number" id="stalenessFreshDays" min="1" max="3650" step="1" />
+        </label>
+
+        <label class="ghrf-field">
+          <span class="ghrf-field-label">Considéré "à l'abandon" au-delà de (jours)</span>
+          <input type="number" id="stalenessStaleDays" min="1" max="3650" step="1" />
+          <span class="ghrf-hint">Entre les deux seuils : orange ("pas mis à jour depuis un moment").</span>
+        </label>
+
+        <div class="ghrf-field">
+          <span class="ghrf-field-label">Couleurs</span>
+          <div class="ghrf-staleness-colors">
+            <label>Récent <input type="color" id="stalenessColorFresh" /></label>
+            <label>Moyen <input type="color" id="stalenessColorWarning" /></label>
+            <label>À l'abandon <input type="color" id="stalenessColorStale" /></label>
+          </div>
+        </div>
+      </section>
+
       <div class="ghrf-save-row">
         <button type="button" id="saveBtn" class="ghrf-btn ghrf-btn-primary">Enregistrer</button>
         <span id="savedNote" class="ghrf-hint ghrf-hidden">Enregistré ✓</span>
