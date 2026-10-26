@@ -59,6 +59,11 @@ ci-dessous).
   « Travail » > « Client A ») depuis son menu `⋯` ; filtrer par un dossier
   parent inclut aussi les repos de ses enfants, et le menu contextuel /
   la liste déroulante des actions groupées reflètent aussi la hiérarchie
+- **Tableau de bord** — une vue kanban/liste de tous les dossiers et leurs
+  repos sur une seule page (popup → 📊) ; n'affiche que ce qui est
+  réellement enregistré (noms de dossiers, affectations, épinglés, notes) —
+  pas le langage/étoiles/état archivé, qui n'existent que sur la page
+  GitHub elle-même
 
 ## Installation (mode développeur)
 
@@ -130,9 +135,11 @@ JavaScript simple (sans build, sans framework), Manifest V3 :
 - `src/options.html` / `src/options.js` — la page de Réglages (`options_page`
   MV3), ouverte depuis le bouton ⚙ de la popup.
 - `src/theme.css` — couleurs/mode sombre/boutons partagés pour les pages
-  autonomes de l'extension (popup, réglages), qui ne peuvent pas lire le CSS
-  de GitHub et détectent donc le mode sombre via le
+  autonomes de l'extension (popup, réglages, tableau de bord), qui ne
+  peuvent pas lire le CSS de GitHub et détectent donc le mode sombre via le
   `prefers-color-scheme` du système/navigateur.
+- `src/dashboard.html` / `src/dashboard.js` — la vue d'ensemble kanban/liste,
+  accessible depuis la popup.
 
 ## Retours
 

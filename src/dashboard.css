@@ -1,0 +1,143 @@
+/* Dashboard-specific layout. Shared colors/dark-mode/buttons live in
+   theme.css, linked before this file in dashboard.html. */
+
+body {
+  min-height: 100vh;
+}
+
+.ghrf-dashboard-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ghrf-dashboard-header h1 {
+  font-size: 18px;
+  margin: 0 0 10px;
+}
+
+.ghrf-dashboard-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ghrf-dashboard-view-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.ghrf-dashboard-view-label select {
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  padding: 0 6px;
+  font-size: 13px;
+}
+
+.ghrf-dashboard-scope-note {
+  max-width: 640px;
+}
+
+.ghrf-dashboard-content {
+  display: flex;
+  gap: 14px;
+}
+
+.ghrf-dashboard-content.ghrf-dash-kanban {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.ghrf-dashboard-content.ghrf-dash-kanban .ghrf-dash-card {
+  width: 260px;
+}
+
+.ghrf-dashboard-content.ghrf-dash-list {
+  flex-direction: column;
+}
+
+.ghrf-dash-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ghrf-dash-card .ghrf-dash-card {
+  margin-top: 6px;
+  margin-left: 8px;
+  background: var(--bg);
+}
+
+.ghrf-dash-card-pinned {
+  border-color: var(--accent);
+}
+
+.ghrf-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  display: inline-block;
+}
+
+.ghrf-dash-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.ghrf-dash-card-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ghrf-dash-card-count {
+  font-weight: 400;
+  color: var(--fg-muted);
+  font-size: 11px;
+}
+
+.ghrf-dash-repo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 2px 0;
+}
+
+.ghrf-dash-repo-link {
+  color: var(--fg);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ghrf-dash-repo-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.ghrf-dash-repo-pin,
+.ghrf-dash-repo-note {
+  flex: none;
+  font-size: 11px;
+  cursor: default;
+}

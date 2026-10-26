@@ -158,6 +158,23 @@
         </p>
       </section>
 
+      <section class="ghrf-settings-section">
+        <h2>Tableau de bord</h2>
+
+        <label class="ghrf-field">
+          <span class="ghrf-field-label">Vue par défaut</span>
+          <select id="dashboardDefaultView">
+            <option value="kanban">Kanban (colonnes)</option>
+            <option value="list">Liste (sections empilées)</option>
+          </select>
+        </label>
+
+        <label class="ghrf-field ghrf-field-checkbox">
+          <input type="checkbox" id="dashboardShowEmptyFolders" />
+          <span>Afficher les dossiers vides</span>
+        </label>
+      </section>
+
       <div class="ghrf-save-row">
         <button type="button" id="saveBtn" class="ghrf-btn ghrf-btn-primary">Enregistrer</button>
         <span id="savedNote" class="ghrf-hint ghrf-hidden">Enregistré ✓</span>

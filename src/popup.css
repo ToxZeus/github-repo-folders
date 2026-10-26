@@ -144,3 +144,10 @@ body {
 .ghrf-settings-btn:hover {
   color: var(--fg);
 }
+
+.ghrf-dashboard-link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}

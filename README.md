@@ -51,6 +51,10 @@ your browser except through Chrome's own sync mechanism (opt-in, see
   "Client A") from its `⋯` menu; filtering by a parent also matches its
   children's repos, and the context menu/bulk-assign dropdown reflect the
   hierarchy too
+- **Dashboard** — a kanban/list overview of every folder and its repos in
+  one page (popup → 📊); shows only what's actually stored (folder names,
+  assignments, pins, notes) — not language/stars/archived state, which only
+  exist on the live GitHub page
 
 ## Install (developer mode)
 
@@ -118,8 +122,11 @@ Plain JavaScript (no build step, no framework), Manifest V3:
 - `src/options.html` / `src/options.js` — the Settings page (MV3
   `options_page`), opened from the popup's ⚙ button.
 - `src/theme.css` — shared colors/dark-mode/buttons for the extension's own
-  standalone pages (popup, options), which can't read GitHub's CSS and so
-  detect dark mode via the OS/browser's `prefers-color-scheme` instead.
+  standalone pages (popup, options, dashboard), which can't read GitHub's
+  CSS and so detect dark mode via the OS/browser's `prefers-color-scheme`
+  instead.
+- `src/dashboard.html` / `src/dashboard.js` — the kanban/list overview,
+  reached from the popup.
 
 ## Feedback
 

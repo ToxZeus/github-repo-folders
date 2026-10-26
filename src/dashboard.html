@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tableau de bord — GitHub Repo Folders</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="dashboard.css" />
+  </head>
+  <body>
+    <div class="ghrf-dashboard-page">
+      <header class="ghrf-dashboard-header">
+        <h1>GitHub Repo Folders — Tableau de bord</h1>
+        <div class="ghrf-dashboard-controls">
+          <label class="ghrf-dashboard-view-label">
+            Vue
+            <select id="viewSelect">
+              <option value="kanban">Kanban</option>
+              <option value="list">Liste</option>
+            </select>
+          </label>
+          <span id="statsLine" class="ghrf-hint"></span>
+        </div>
+      </header>
+      <p class="ghrf-hint ghrf-dashboard-scope-note">
+        Ce tableau de bord n'a accès qu'à ce que l'extension a enregistré (dossiers, affectations, épinglés, notes) —
+        pas au langage, aux étoiles, ni à l'état archivé/fork, qui ne sont visibles que sur la page GitHub elle-même.
+      </p>
+      <div id="content" class="ghrf-dashboard-content"></div>
+    </div>
+    <script src="storage.js"></script>
+    <script src="dashboard.js"></script>
+  </body>
+</html>

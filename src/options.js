@@ -21,6 +21,8 @@
     shortcutsShowNumberBadges: document.getElementById("shortcutsShowNumberBadges"),
     shortcutsModifier: document.getElementById("shortcutsModifier"),
     nestingDisplayStyle: document.getElementById("nestingDisplayStyle"),
+    dashboardDefaultView: document.getElementById("dashboardDefaultView"),
+    dashboardShowEmptyFolders: document.getElementById("dashboardShowEmptyFolders"),
     saveBtn: document.getElementById("saveBtn"),
     savedNote: document.getElementById("savedNote")
   };
@@ -106,6 +108,9 @@
     els.shortcutsModifier.value = settings.shortcuts.modifier;
 
     els.nestingDisplayStyle.value = settings.nesting.displayStyle;
+
+    els.dashboardDefaultView.value = settings.dashboard.defaultView;
+    els.dashboardShowEmptyFolders.checked = settings.dashboard.showEmptyFolders;
   }
 
   els.saveBtn.addEventListener("click", async () => {
@@ -138,6 +143,10 @@
       },
       nesting: {
         displayStyle: els.nestingDisplayStyle.value
+      },
+      dashboard: {
+        defaultView: els.dashboardDefaultView.value,
+        showEmptyFolders: els.dashboardShowEmptyFolders.checked
       }
     });
     loadedStoragePreference = next.storagePreference;

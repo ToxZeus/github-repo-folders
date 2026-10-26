@@ -69,6 +69,10 @@
     },
     nesting: {
       displayStyle: "indent" // "indent" | "grouped"
+    },
+    dashboard: {
+      defaultView: "kanban", // "kanban" | "list"
+      showEmptyFolders: true
     }
   };
 
@@ -138,6 +142,17 @@
         : DEFAULT_SETTINGS.nesting.displayStyle
     };
 
+    const dashboardIn = s.dashboard && typeof s.dashboard === "object" ? s.dashboard : {};
+    const dashboard = {
+      defaultView: ["kanban", "list"].includes(dashboardIn.defaultView)
+        ? dashboardIn.defaultView
+        : DEFAULT_SETTINGS.dashboard.defaultView,
+      showEmptyFolders:
+        dashboardIn.showEmptyFolders !== undefined
+          ? Boolean(dashboardIn.showEmptyFolders)
+          : DEFAULT_SETTINGS.dashboard.showEmptyFolders
+    };
+
     return {
       badgeMetric,
       renderDebounceMs: clampNumber(s.renderDebounceMs, 50, 2000, DEFAULT_SETTINGS.renderDebounceMs),
@@ -149,7 +164,8 @@
       notes,
       staleness,
       shortcuts,
-      nesting
+      nesting,
+      dashboard
     };
   }
 
