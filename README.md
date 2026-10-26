@@ -27,6 +27,10 @@ your browser except through Chrome's own sync mechanism (opt-in, see
   live "already in this folder" state on a context menu)
 - **Bulk actions** — select several repos at once and assign them all to a
   folder in one go
+- **Stars tab support** — organize repos you've starred
+  (`?tab=stars`), not just your own, into the same folders (no
+  archived/fork filter there — GitHub's Stars page markup doesn't expose
+  that signal)
 - **Custom colors** per folder
 - **Cross-device sync** via `chrome.storage.sync` (follows your Chrome profile)
 - **JSON export/import** for manual backup or transfer
@@ -68,7 +72,7 @@ refresh any open GitHub tab.
 
 ## Known limitations
 
-- Works on your personal profile (`github.com/<user>?tab=repositories`) only.
+- Works on your personal profile's Repositories and Stars tabs only.
   Organization pages (`github.com/orgs/<org>/repositories`) use a different
   (React-based) UI that isn't supported yet.
 - `chrome.storage.sync` has a strict quota (8KB per item, 100KB total). Data
@@ -83,7 +87,10 @@ Plain JavaScript (no build step, no framework), Manifest V3:
 - `src/content.js` / `src/content.css` — injects the folder toolbar and
   per-repo controls into the GitHub page, styled with GitHub's own Primer
   CSS custom properties (`--fgColor-*`, `--bgColor-*`, `--borderColor-*`) so
-  it matches the active theme automatically.
+  it matches the active theme automatically. Repositories vs. Stars (quite
+  different markup) are handled through a small page-adapter interface —
+  everything else (toolbar, filters, drag-and-drop, pinning) is written
+  once against that interface.
 - `src/storage.js` — shared storage layer (`chrome.storage.sync`/`local`),
   used by both the content script and the popup.
 - `src/popup.html` / `src/popup.js` — the toolbar-icon popup for managing

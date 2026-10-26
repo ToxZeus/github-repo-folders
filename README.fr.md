@@ -33,6 +33,10 @@ ci-dessous).
   direct sur un menu contextuel)
 - **Actions groupées** — sélectionne plusieurs repos et assigne-les tous à
   un dossier en une fois
+- **Support de l'onglet Stars** — organise aussi les repos que tu as
+  starrés (`?tab=stars`), pas seulement les tiens, dans les mêmes dossiers
+  (pas de filtre archivé/fork là-bas — le markup de GitHub n'expose pas ce
+  signal sur cette page)
 - **Couleurs personnalisables** par dossier
 - **Synchronisation entre appareils** via `chrome.storage.sync` (liée à ton
   compte Chrome)
@@ -77,7 +81,7 @@ carte de l'extension, puis rafraîchis les onglets GitHub ouverts.
 
 ## Limites connues
 
-- Fonctionne sur le profil personnel (`github.com/<user>?tab=repositories`)
+- Fonctionne sur les onglets Repositories et Stars du profil personnel
   uniquement. Les pages d'organisation (`github.com/orgs/<org>/repositories`)
   utilisent une interface différente (React), pas encore supportée.
 - `chrome.storage.sync` a un quota strict (8 Ko par entrée, 100 Ko au total).
@@ -94,6 +98,10 @@ JavaScript simple (sans build, sans framework), Manifest V3 :
   dossiers et les contrôles par repo dans la page GitHub, stylé avec les
   variables CSS Primer de GitHub (`--fgColor-*`, `--bgColor-*`,
   `--borderColor-*`) pour s'aligner automatiquement sur le thème actif.
+  Repositories et Stars (markup assez différent) sont gérés via une petite
+  interface d'adaptateur par page — tout le reste (barre d'outils, filtres,
+  glisser-déposer, épinglage) est écrit une seule fois contre cette
+  interface.
 - `src/storage.js` — couche de stockage partagée (`chrome.storage.sync`/
   `local`), utilisée à la fois par le script de contenu et la popup.
 - `src/popup.html` / `src/popup.js` — popup de l'icône pour gérer les

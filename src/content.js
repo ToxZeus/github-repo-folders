@@ -30,21 +30,85 @@
   let outsideCloseHandler = null;
   let escCloseHandler = null;
 
-  function getRepoContainer() {
-    return document.getElementById("user-repositories-list");
-  }
+  // ---------- page adapters ----------
+  // The Repositories tab and the Stars tab render repo lists with
+  // completely different markup (the former is schema.org itemprop-based,
+  // server-rendered the same way for years; the latter has no itemprop
+  // hooks at all and leans on utility classes that look more likely to
+  // shift over time). Everything downstream (toolbar, filters, decorate,
+  // pinned-reorder) works purely in terms of these two adapters' interface
+  // so it doesn't care which page it's on.
 
-  function extractRepoInfo(li) {
-    const a = li.querySelector('a[itemprop="name codeRepository"]');
-    if (!a) return null;
-    const fullName = (a.getAttribute("href") || "").replace(/^\//, "").trim();
-    if (!fullName) return null;
-    const langEl = li.querySelector('[itemprop="programmingLanguage"]');
-    const language = langEl ? langEl.textContent.trim() : "";
-    const isFork = li.classList.contains("fork");
-    const labels = Array.from(li.querySelectorAll("h3 .Label")).map((s) => s.textContent.trim());
-    const isArchived = labels.includes("Archived");
-    return { fullName, language, isFork, isArchived };
+  const reposAdapter = {
+    name: "repos",
+    supportsTypeFilters: true,
+    titleSelector: "h3.wb-break-all",
+    getContainer() {
+      return document.getElementById("user-repositories-list");
+    },
+    getRows(container) {
+      return Array.from(container.querySelectorAll('li[itemprop="owns"]'));
+    },
+    extractInfo(row) {
+      const a = row.querySelector('a[itemprop="name codeRepository"]');
+      if (!a) return null;
+      const fullName = (a.getAttribute("href") || "").replace(/^\//, "").trim();
+      if (!fullName) return null;
+      const langEl = row.querySelector('[itemprop="programmingLanguage"]');
+      const language = langEl ? langEl.textContent.trim() : "";
+      const isFork = row.classList.contains("fork");
+      const labels = Array.from(row.querySelectorAll("h3 .Label")).map((s) => s.textContent.trim());
+      const isArchived = labels.includes("Archived");
+      return { fullName, language, isFork, isArchived };
+    }
+  };
+
+  const starsAdapter = {
+    name: "stars",
+    // No archived/fork signal exists in this markup at all (not "unknown",
+    // genuinely absent) — hide those filters rather than let them silently
+    // no-op.
+    supportsTypeFilters: false,
+    titleSelector: "h3",
+    getContainer() {
+      return document.getElementById("user-starred-repos");
+    },
+    getRows(container) {
+      // Deliberately not keyed off this page's utility classes (they read
+      // as transitional and more likely to change than schema.org
+      // itemprop markup). The one stable signal is the repo link itself:
+      // each row is <h3><a href="/owner/repo">...</a></h3> wrapped one
+      // level deep, so climb from the anchor instead of matching classes.
+      const anchors = Array.from(container.querySelectorAll("h3 > a[href]"));
+      const rows = [];
+      const seen = new Set();
+      anchors.forEach((a) => {
+        const h3 = a.parentElement;
+        const row = h3 && h3.parentElement && h3.parentElement.parentElement;
+        if (row && !seen.has(row)) {
+          seen.add(row);
+          rows.push(row);
+        }
+      });
+      return rows;
+    },
+    extractInfo(row) {
+      const a = row.querySelector("h3 > a[href]");
+      if (!a) return null;
+      const fullName = (a.getAttribute("href") || "").replace(/^\//, "").trim();
+      if (!fullName || fullName.split("/").length !== 2) return null;
+      const langEl = row.querySelector('[itemprop="programmingLanguage"]');
+      const language = langEl ? langEl.textContent.trim() : "";
+      return { fullName, language, isFork: false, isArchived: false };
+    }
+  };
+
+  function getActiveAdapter() {
+    const reposContainer = reposAdapter.getContainer();
+    if (reposContainer) return { adapter: reposAdapter, container: reposContainer };
+    const starsContainer = starsAdapter.getContainer();
+    if (starsContainer) return { adapter: starsAdapter, container: starsContainer };
+    return null;
   }
 
   function collectLanguages(container) {
@@ -270,20 +334,24 @@
 
   // ---------- rendering ----------
 
-  function applyPinnedOrder(container, pinned) {
-    const ul = container.querySelector("ul");
-    if (!ul) return;
-    const oldHeading = ul.querySelector(".ghrf-pinned-heading-row");
+  function applyPinnedOrder(adapter, container, pinned) {
+    const rows = adapter.getRows(container);
+    if (rows.length === 0) return;
+    const listRoot = rows[0].parentElement;
+    if (!listRoot) return;
+
+    const oldHeading = listRoot.querySelector(".ghrf-pinned-heading-row");
     if (oldHeading) oldHeading.remove();
 
     const pinnedSet = new Set(pinned || []);
-    const items = Array.from(container.querySelectorAll('li[itemprop="owns"]'));
-    const visible = items.filter((li) => li.style.display !== "none");
-    const pinnedVisible = visible.filter((li) => pinnedSet.has(li.dataset.ghrfRepo));
-    const restVisible = visible.filter((li) => !pinnedSet.has(li.dataset.ghrfRepo));
+    const visible = rows.filter((row) => row.style.display !== "none");
+    const pinnedVisible = visible.filter((row) => pinnedSet.has(row.dataset.ghrfRepo));
+    const restVisible = visible.filter((row) => !pinnedSet.has(row.dataset.ghrfRepo));
     if (pinnedVisible.length === 0 || restVisible.length === 0) return;
 
-    const heading = document.createElement("li");
+    // Same tag as the rows themselves (<li> for Repositories, <div> for
+    // Stars) so it's valid to interleave with them in their shared parent.
+    const heading = document.createElement(rows[0].tagName.toLowerCase());
     heading.className = "ghrf-pinned-heading-row";
     heading.style.listStyle = "none";
     const headingLabel = document.createElement("div");
@@ -291,17 +359,17 @@
     headingLabel.textContent = "★ Épinglés";
     heading.appendChild(headingLabel);
 
-    pinnedVisible.forEach((li) => ul.appendChild(li));
-    ul.appendChild(heading);
-    restVisible.forEach((li) => ul.appendChild(li));
+    pinnedVisible.forEach((row) => listRoot.appendChild(row));
+    listRoot.appendChild(heading);
+    restVisible.forEach((row) => listRoot.appendChild(row));
   }
 
-  function applyFilters(container) {
+  function applyFilters(adapter, container) {
     window.GHRF.getData().then((data) => {
-      const items = container.querySelectorAll('li[itemprop="owns"]');
+      const rows = adapter.getRows(container);
       let shown = 0;
-      items.forEach((li) => {
-        const info = extractRepoInfo(li);
+      rows.forEach((row) => {
+        const info = adapter.extractInfo(row);
         if (!info) return;
         let visible = true;
         if (state.activeFolderId) {
@@ -309,32 +377,32 @@
           if (!ids.includes(state.activeFolderId)) visible = false;
         }
         if (visible && state.language && info.language !== state.language) visible = false;
-        if (visible && state.hideArchived && info.isArchived) visible = false;
-        if (visible && state.hideForks && info.isFork) visible = false;
+        if (visible && adapter.supportsTypeFilters && state.hideArchived && info.isArchived) visible = false;
+        if (visible && adapter.supportsTypeFilters && state.hideForks && info.isFork) visible = false;
         if (visible && state.searchQuery) {
           const q = state.searchQuery.trim().toLowerCase();
           if (q && !info.fullName.toLowerCase().includes(q)) visible = false;
         }
         if (visible) {
-          li.style.removeProperty("display");
+          row.style.removeProperty("display");
         } else {
           // GitHub's own ".d-flex{display:flex!important}" class on these
-          // <li> elements beats a plain inline style, so force ours too.
-          li.style.setProperty("display", "none", "important");
+          // rows beats a plain inline style, so force ours too.
+          row.style.setProperty("display", "none", "important");
         }
         if (visible) shown++;
       });
-      applyPinnedOrder(container, data.pinned);
+      applyPinnedOrder(adapter, container, data.pinned);
       const countLabel = toolbarEl && toolbarEl.querySelector(".ghrf-count-label");
       if (countLabel) {
-        countLabel.textContent = `${shown} / ${items.length} repo${items.length > 1 ? "s" : ""} affiché${
+        countLabel.textContent = `${shown} / ${rows.length} repo${rows.length > 1 ? "s" : ""} affiché${
           shown > 1 ? "s" : ""
         }`;
       }
     });
   }
 
-  function renderToolbar(data, container) {
+  function renderToolbar(adapter, data, container) {
     const prevSearch = toolbarEl.querySelector(".ghrf-search-input");
     const searchHadFocus = !!prevSearch && prevSearch === document.activeElement;
     const searchSelStart = searchHadFocus ? prevSearch.selectionStart : null;
@@ -523,7 +591,7 @@
     searchInput.value = state.searchQuery;
     searchInput.addEventListener("input", () => {
       state.searchQuery = searchInput.value;
-      applyFilters(container);
+      applyFilters(adapter, container);
     });
     filtersRow.appendChild(searchInput);
     if (searchHadFocus) {
@@ -547,35 +615,37 @@
     });
     langSelect.addEventListener("change", () => {
       state.language = langSelect.value;
-      applyFilters(container);
+      applyFilters(adapter, container);
     });
     filtersRow.appendChild(langSelect);
 
-    const archLabel = document.createElement("label");
-    archLabel.className = "ghrf-check-label";
-    const archCb = document.createElement("input");
-    archCb.type = "checkbox";
-    archCb.checked = state.hideArchived;
-    archCb.addEventListener("change", () => {
-      state.hideArchived = archCb.checked;
-      applyFilters(container);
-    });
-    archLabel.appendChild(archCb);
-    archLabel.appendChild(document.createTextNode(" Masquer archivés"));
-    filtersRow.appendChild(archLabel);
+    if (adapter.supportsTypeFilters) {
+      const archLabel = document.createElement("label");
+      archLabel.className = "ghrf-check-label";
+      const archCb = document.createElement("input");
+      archCb.type = "checkbox";
+      archCb.checked = state.hideArchived;
+      archCb.addEventListener("change", () => {
+        state.hideArchived = archCb.checked;
+        applyFilters(adapter, container);
+      });
+      archLabel.appendChild(archCb);
+      archLabel.appendChild(document.createTextNode(" Masquer archivés"));
+      filtersRow.appendChild(archLabel);
 
-    const forkLabel = document.createElement("label");
-    forkLabel.className = "ghrf-check-label";
-    const forkCb = document.createElement("input");
-    forkCb.type = "checkbox";
-    forkCb.checked = state.hideForks;
-    forkCb.addEventListener("change", () => {
-      state.hideForks = forkCb.checked;
-      applyFilters(container);
-    });
-    forkLabel.appendChild(forkCb);
-    forkLabel.appendChild(document.createTextNode(" Masquer forks"));
-    filtersRow.appendChild(forkLabel);
+      const forkLabel = document.createElement("label");
+      forkLabel.className = "ghrf-check-label";
+      const forkCb = document.createElement("input");
+      forkCb.type = "checkbox";
+      forkCb.checked = state.hideForks;
+      forkCb.addEventListener("change", () => {
+        state.hideForks = forkCb.checked;
+        applyFilters(adapter, container);
+      });
+      forkLabel.appendChild(forkCb);
+      forkLabel.appendChild(document.createTextNode(" Masquer forks"));
+      filtersRow.appendChild(forkLabel);
+    }
 
     const countLabel = document.createElement("span");
     countLabel.className = "ghrf-count-label";
@@ -588,26 +658,26 @@
     syncNote.textContent = "🔄 Dossiers synchronisés via ton compte Chrome";
     toolbarEl.appendChild(syncNote);
 
-    applyFilters(container);
+    applyFilters(adapter, container);
   }
 
-  function decorateRepoItems(container, data) {
-    const items = container.querySelectorAll('li[itemprop="owns"]');
-    items.forEach((li) => {
-      const info = extractRepoInfo(li);
+  function decorateRepoItems(adapter, container, data) {
+    const rows = adapter.getRows(container);
+    rows.forEach((row) => {
+      const info = adapter.extractInfo(row);
       if (!info) return;
-      li.dataset.ghrfRepo = info.fullName;
+      row.dataset.ghrfRepo = info.fullName;
 
-      if (!li.dataset.ghrfBound) {
-        li.dataset.ghrfBound = "1";
-        li.classList.add("ghrf-li-anchor");
-        li.draggable = true;
-        li.addEventListener("dragstart", (e) => {
-          e.dataTransfer.setData("text/plain", li.dataset.ghrfRepo);
+      if (!row.dataset.ghrfBound) {
+        row.dataset.ghrfBound = "1";
+        row.classList.add("ghrf-li-anchor");
+        row.draggable = true;
+        row.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", row.dataset.ghrfRepo);
           e.dataTransfer.effectAllowed = "copy";
-          li.classList.add("ghrf-dragging");
+          row.classList.add("ghrf-dragging");
         });
-        li.addEventListener("dragend", () => li.classList.remove("ghrf-dragging"));
+        row.addEventListener("dragend", () => row.classList.remove("ghrf-dragging"));
 
         const controls = document.createElement("div");
         controls.className = "ghrf-repo-controls";
@@ -618,7 +688,7 @@
         selectCb.title = "Sélectionner ce repo";
         selectCb.addEventListener("click", (e) => e.stopPropagation());
         selectCb.addEventListener("change", () => {
-          const fullName = li.dataset.ghrfRepo;
+          const fullName = row.dataset.ghrfRepo;
           if (selectCb.checked) state.selected.add(fullName);
           else state.selected.delete(fullName);
           updateBulkBar();
@@ -633,7 +703,7 @@
         pinBtn.addEventListener("click", async (e) => {
           e.preventDefault();
           e.stopPropagation();
-          await window.GHRF.togglePin(li.dataset.ghrfRepo);
+          await window.GHRF.togglePin(row.dataset.ghrfRepo);
           renderAll();
         });
         controls.appendChild(pinBtn);
@@ -646,20 +716,20 @@
         btn.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
-          openAssignPopover(btn, li.dataset.ghrfRepo, renderAll);
+          openAssignPopover(btn, row.dataset.ghrfRepo, renderAll);
         });
         controls.appendChild(btn);
-        li.appendChild(controls);
+        row.appendChild(controls);
 
-        const h3 = li.querySelector("h3.wb-break-all");
-        if (h3) {
+        const titleEl = row.querySelector(adapter.titleSelector);
+        if (titleEl) {
           const dots = document.createElement("span");
           dots.className = "ghrf-title-dots";
-          h3.appendChild(dots);
+          titleEl.appendChild(dots);
         }
       }
 
-      const dotsEl = li.querySelector(".ghrf-title-dots");
+      const dotsEl = row.querySelector(".ghrf-title-dots");
       if (dotsEl) {
         dotsEl.innerHTML = "";
         (data.assignments[info.fullName] || []).forEach((id) => {
@@ -674,13 +744,13 @@
       }
 
       const isPinned = (data.pinned || []).includes(info.fullName);
-      const pinBtn = li.querySelector(".ghrf-pin-btn");
+      const pinBtn = row.querySelector(".ghrf-pin-btn");
       if (pinBtn) {
         pinBtn.classList.toggle("pinned", isPinned);
         pinBtn.title = isPinned ? "Désépingler ce repo" : "Épingler ce repo";
       }
 
-      const selectCb = li.querySelector(".ghrf-select-cb");
+      const selectCb = row.querySelector(".ghrf-select-cb");
       if (selectCb) {
         selectCb.style.display = state.selectMode ? "" : "none";
         selectCb.checked = state.selected.has(info.fullName);
@@ -701,28 +771,45 @@
     }
   }
 
+  // Tracks which container the current toolbar was built for, so switching
+  // between the Repositories and Stars tabs via Turbo's soft navigation
+  // (which may not remove a toolbar left over from the other page type)
+  // triggers a proper rebuild instead of reusing a stale, misplaced one.
+  let toolbarForContainer = null;
+
   function ensureToolbar(container) {
-    if (toolbarEl && document.body.contains(toolbarEl)) return toolbarEl;
+    if (toolbarEl && document.body.contains(toolbarEl) && toolbarForContainer === container) {
+      return toolbarEl;
+    }
+    if (toolbarEl) toolbarEl.remove();
     toolbarEl = document.createElement("div");
     toolbarEl.id = "ghrf-toolbar";
     toolbarEl.className = "ghrf-toolbar";
     container.parentNode.insertBefore(toolbarEl, container);
+    toolbarForContainer = container;
     return toolbarEl;
   }
 
+  function toolbarNeedsRebuild(active) {
+    if (!active) return false;
+    return !toolbarEl || !document.body.contains(toolbarEl) || toolbarForContainer !== active.container;
+  }
+
   async function renderAll() {
-    const container = getRepoContainer();
-    if (!container) {
+    const active = getActiveAdapter();
+    if (!active) {
       if (toolbarEl) {
         toolbarEl.remove();
         toolbarEl = null;
+        toolbarForContainer = null;
       }
       return;
     }
+    const { adapter, container } = active;
     ensureToolbar(container);
     const data = await window.GHRF.getData();
-    decorateRepoItems(container, data);
-    renderToolbar(data, container);
+    decorateRepoItems(adapter, container, data);
+    renderToolbar(adapter, data, container);
   }
 
   function scheduleRender() {
@@ -731,12 +818,13 @@
   }
 
   const observer = new MutationObserver(() => {
-    const container = getRepoContainer();
-    if (container && (!toolbarEl || !document.body.contains(toolbarEl))) {
+    const active = getActiveAdapter();
+    if (toolbarNeedsRebuild(active)) {
       scheduleRender();
-    } else if (!container && toolbarEl) {
+    } else if (!active && toolbarEl) {
       toolbarEl.remove();
       toolbarEl = null;
+      toolbarForContainer = null;
     }
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
@@ -751,10 +839,7 @@
   // Safety net: GitHub's soft navigation can occasionally swap the repo
   // list without the toolbar surviving; this catches that within ~1.5s.
   setInterval(() => {
-    const container = getRepoContainer();
-    if (container && (!toolbarEl || !document.body.contains(toolbarEl))) {
-      scheduleRender();
-    }
+    if (toolbarNeedsRebuild(getActiveAdapter())) scheduleRender();
   }, 1500);
 
   scheduleRender();
