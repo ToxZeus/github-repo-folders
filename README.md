@@ -25,6 +25,8 @@ your browser except through Chrome's own sync mechanism (opt-in, see
   github.com, from a folder without opening the Repositories tab (the menu
   is generic — "Add to X" / "Remove from X" — Chrome has no way to show a
   live "already in this folder" state on a context menu)
+- **Bulk actions** — select several repos at once and assign them all to a
+  folder in one go
 - **Custom colors** per folder
 - **Cross-device sync** via `chrome.storage.sync` (follows your Chrome profile)
 - **JSON export/import** for manual backup or transfer

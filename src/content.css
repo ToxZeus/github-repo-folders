@@ -104,6 +104,52 @@
   border-style: dashed;
 }
 
+.ghrf-select-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 14px;
+  border: 1px solid var(--borderColor-default, #d1d9e0);
+  background: var(--bgColor-default, #fff);
+  color: var(--fgColor-default, #1f2328);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ghrf-select-toggle-btn.active {
+  background: var(--bgColor-accent-muted, #ddf4ff);
+  border-color: var(--fgColor-accent, #0969da);
+  color: var(--fgColor-accent, #0969da);
+}
+
+.ghrf-bulk-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--borderColor-muted, #d1d9e0b3);
+}
+
+.ghrf-bulk-count {
+  color: var(--fgColor-muted, #59636e);
+}
+
+.ghrf-bulk-folder-select {
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--borderColor-default, #d1d9e0);
+  background: var(--bgColor-default, #fff);
+  color: var(--fgColor-default, #1f2328);
+  font-size: 12px;
+  padding: 0 6px;
+}
+
+.ghrf-select-cb {
+  margin: 0;
+}
+
 .ghrf-filters {
   display: flex;
   flex-wrap: wrap;
@@ -155,7 +201,8 @@
   top: 2px;
   right: 2px;
   display: flex;
-  gap: 2px;
+  align-items: center;
+  gap: 4px;
 }
 
 .ghrf-badge-btn,

@@ -227,6 +227,18 @@
     return data;
   }
 
+  async function assignMany(repoFullNames, folderId) {
+    const data = await getData();
+    repoFullNames.forEach((repoFullName) => {
+      const current = data.assignments[repoFullName] || [];
+      if (!current.includes(folderId)) {
+        data.assignments[repoFullName] = [...current, folderId];
+      }
+    });
+    await setData(data);
+    return data;
+  }
+
   async function removeAssignment(repoFullName, folderId) {
     const data = await getData();
     const current = data.assignments[repoFullName] || [];
@@ -320,6 +332,7 @@
     deleteFolder,
     toggleAssignment,
     addAssignment,
+    assignMany,
     removeAssignment,
     togglePin,
     exportJSON,

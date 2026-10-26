@@ -31,6 +31,8 @@ ci-dessous).
   Repositories (le menu est générique — « Ajouter à X » / « Retirer de X »
   — Chrome ne permet pas d'afficher un état « déjà dans ce dossier » en
   direct sur un menu contextuel)
+- **Actions groupées** — sélectionne plusieurs repos et assigne-les tous à
+  un dossier en une fois
 - **Couleurs personnalisables** par dossier
 - **Synchronisation entre appareils** via `chrome.storage.sync` (liée à ton
   compte Chrome)

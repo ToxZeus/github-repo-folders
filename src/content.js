@@ -16,7 +16,15 @@
 
   const FOLDER_REORDER_MIME = "application/x-ghrf-folder-id";
 
-  const state = { activeFolderId: null, language: "", hideArchived: false, hideForks: false, searchQuery: "" };
+  const state = {
+    activeFolderId: null,
+    language: "",
+    hideArchived: false,
+    hideForks: false,
+    searchQuery: "",
+    selectMode: false,
+    selected: new Set()
+  };
   let toolbarEl = null;
   let debounceTimer = null;
   let outsideCloseHandler = null;
@@ -428,7 +436,74 @@
     addBtn.addEventListener("click", () => openNewFolderPopover(addBtn, renderAll));
     chipsRow.appendChild(addBtn);
 
+    const selectToggleBtn = document.createElement("button");
+    selectToggleBtn.type = "button";
+    selectToggleBtn.className = "ghrf-select-toggle-btn" + (state.selectMode ? " active" : "");
+    selectToggleBtn.textContent = state.selectMode ? "Terminer la sélection" : "Sélectionner";
+    selectToggleBtn.addEventListener("click", () => {
+      state.selectMode = !state.selectMode;
+      if (!state.selectMode) state.selected.clear();
+      renderAll();
+    });
+    chipsRow.appendChild(selectToggleBtn);
+
     toolbarEl.appendChild(chipsRow);
+
+    if (state.selectMode) {
+      const bulkRow = document.createElement("div");
+      bulkRow.className = "ghrf-bulk-row";
+
+      const countEl = document.createElement("span");
+      countEl.className = "ghrf-bulk-count";
+      countEl.textContent = `${state.selected.size} sélectionné${state.selected.size > 1 ? "s" : ""}`;
+      bulkRow.appendChild(countEl);
+
+      const bulkSelect = document.createElement("select");
+      bulkSelect.className = "ghrf-bulk-folder-select";
+      bulkSelect.setAttribute("aria-label", "Dossier à assigner aux repos sélectionnés");
+      if (data.folders.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Aucun dossier";
+        bulkSelect.appendChild(opt);
+        bulkSelect.disabled = true;
+      } else {
+        data.folders.forEach((folder) => {
+          const opt = document.createElement("option");
+          opt.value = folder.id;
+          opt.textContent = folder.name;
+          bulkSelect.appendChild(opt);
+        });
+      }
+      bulkRow.appendChild(bulkSelect);
+
+      const assignBtn = document.createElement("button");
+      assignBtn.type = "button";
+      assignBtn.className = "ghrf-btn ghrf-btn-primary ghrf-bulk-assign-btn";
+      assignBtn.textContent = "Assigner";
+      assignBtn.disabled = state.selected.size === 0 || data.folders.length === 0;
+      assignBtn.addEventListener("click", async () => {
+        if (!bulkSelect.value || state.selected.size === 0) return;
+        await window.GHRF.assignMany(Array.from(state.selected), bulkSelect.value);
+        state.selectMode = false;
+        state.selected.clear();
+        renderAll();
+      });
+      bulkRow.appendChild(assignBtn);
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "ghrf-btn";
+      cancelBtn.textContent = "Annuler";
+      cancelBtn.addEventListener("click", () => {
+        state.selectMode = false;
+        state.selected.clear();
+        renderAll();
+      });
+      bulkRow.appendChild(cancelBtn);
+
+      toolbarEl.appendChild(bulkRow);
+    }
 
     const filtersRow = document.createElement("div");
     filtersRow.className = "ghrf-filters";
@@ -530,6 +605,19 @@
         const controls = document.createElement("div");
         controls.className = "ghrf-repo-controls";
 
+        const selectCb = document.createElement("input");
+        selectCb.type = "checkbox";
+        selectCb.className = "ghrf-select-cb";
+        selectCb.title = "Sélectionner ce repo";
+        selectCb.addEventListener("click", (e) => e.stopPropagation());
+        selectCb.addEventListener("change", () => {
+          const fullName = li.dataset.ghrfRepo;
+          if (selectCb.checked) state.selected.add(fullName);
+          else state.selected.delete(fullName);
+          updateBulkBar();
+        });
+        controls.appendChild(selectCb);
+
         const pinBtn = document.createElement("button");
         pinBtn.type = "button";
         pinBtn.className = "ghrf-pin-btn";
@@ -584,7 +672,26 @@
         pinBtn.classList.toggle("pinned", isPinned);
         pinBtn.title = isPinned ? "Désépingler ce repo" : "Épingler ce repo";
       }
+
+      const selectCb = li.querySelector(".ghrf-select-cb");
+      if (selectCb) {
+        selectCb.style.display = state.selectMode ? "" : "none";
+        selectCb.checked = state.selected.has(info.fullName);
+      }
     });
+  }
+
+  function updateBulkBar() {
+    if (!toolbarEl) return;
+    const countEl = toolbarEl.querySelector(".ghrf-bulk-count");
+    if (countEl) {
+      countEl.textContent = `${state.selected.size} sélectionné${state.selected.size > 1 ? "s" : ""}`;
+    }
+    const assignBtn = toolbarEl.querySelector(".ghrf-bulk-assign-btn");
+    if (assignBtn) {
+      const bulkSelect = toolbarEl.querySelector(".ghrf-bulk-folder-select");
+      assignBtn.disabled = state.selected.size === 0 || !bulkSelect || !bulkSelect.value;
+    }
   }
 
   function ensureToolbar(container) {
