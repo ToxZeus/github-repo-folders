@@ -151,3 +151,11 @@ body {
   text-decoration: none;
   box-sizing: border-box;
 }
+
+.ghrf-share-settings-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--fg-muted);
+}

@@ -41,12 +41,26 @@
         <input id="importFile" type="file" accept="application/json" aria-label="Choisir un fichier JSON à importer" hidden />
       </div>
 
+      <div class="ghrf-actions">
+        <button id="shareLinkBtn" class="ghrf-btn" type="button">🔗 Générer un lien</button>
+        <button id="importLinkBtn" class="ghrf-btn" type="button">🔗 Importer un lien</button>
+      </div>
+      <label class="ghrf-field-checkbox ghrf-share-settings-check">
+        <input type="checkbox" id="shareLinkIncludeSettings" />
+        <span>Inclure les réglages dans le lien</span>
+      </label>
+      <p class="ghrf-hint">
+        Le lien n'est garanti d'ouvrir correctement que sur cet appareil (pas d'identifiant d'extension fixe). Pour
+        transférer vers un autre appareil, utilise Exporter/Importer (JSON).
+      </p>
+
       <p class="ghrf-hint">
         Va sur ton profil GitHub → onglet <em>Repositories</em> pour classer tes repos (glisser-déposer sur un
         dossier, ou bouton dossier sur chaque repo).
       </p>
     </div>
     <script src="storage.js"></script>
+    <script src="share-link.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

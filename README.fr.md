@@ -64,6 +64,12 @@ ci-dessous).
   réellement enregistré (noms de dossiers, affectations, épinglés, notes) —
   pas le langage/étoiles/état archivé, qui n'existent que sur la page
   GitHub elle-même
+- **Lien de partage de config** — génère un lien compressé encodant tes
+  dossiers/affectations/épinglés/notes, comme alternative rapide à l'export
+  JSON pour une sauvegarde/restauration sur le même appareil (aucun
+  identifiant d'extension fixe n'est épinglé, donc un lien généré n'est pas
+  censé s'ouvrir correctement sur un autre appareil — utilise l'export/
+  import JSON pour ça)
 
 ## Installation (mode développeur)
 
@@ -111,6 +117,16 @@ carte de l'extension, puis rafraîchis les onglets GitHub ouverts.
   avec plusieurs centaines de repos classés, mais au-delà, les écritures de
   synchronisation peuvent échouer — l'extension bascule alors sur un stockage
   local uniquement et affiche un avertissement dans la console.
+- Le lien de partage de config ne s'ouvre correctement que sur l'appareil
+  où il a été généré (pas d'identifiant d'extension figé dans le manifest,
+  volontairement, pour ne pas réinitialiser le `chrome.storage` des
+  utilisateurs existants sous un nouvel identifiant). Il refuse aussi de se
+  générer au-delà de ~32 Ko compressés — utilise l'export JSON pour les
+  très grosses configs.
+- Le tableau de bord n'affiche que ce qui est réellement enregistré
+  (dossiers, affectations, épinglés, notes) — pas le langage, les étoiles,
+  ni l'état archivé/fork, qui n'existent que sur la page GitHub elle-même
+  et ne sont jamais mis en cache.
 
 ## Fonctionnement technique
 
@@ -140,6 +156,10 @@ JavaScript simple (sans build, sans framework), Manifest V3 :
   `prefers-color-scheme` du système/navigateur.
 - `src/dashboard.html` / `src/dashboard.js` — la vue d'ensemble kanban/liste,
   accessible depuis la popup.
+- `src/share-link.js` — compression gzip (`CompressionStream` natif) +
+  encodage base64url pour le lien de partage, partagé par la popup et
+  `src/import.html` / `src/import.js` (la page de réception, qui prévisualise
+  le contenu avant de réutiliser `importJSON` de `storage.js` tel quel).
 
 ## Retours
 

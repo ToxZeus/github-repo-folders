@@ -23,6 +23,7 @@
     nestingDisplayStyle: document.getElementById("nestingDisplayStyle"),
     dashboardDefaultView: document.getElementById("dashboardDefaultView"),
     dashboardShowEmptyFolders: document.getElementById("dashboardShowEmptyFolders"),
+    shareLinkIncludeSettingsByDefault: document.getElementById("shareLinkIncludeSettingsByDefault"),
     saveBtn: document.getElementById("saveBtn"),
     savedNote: document.getElementById("savedNote")
   };
@@ -111,6 +112,8 @@
 
     els.dashboardDefaultView.value = settings.dashboard.defaultView;
     els.dashboardShowEmptyFolders.checked = settings.dashboard.showEmptyFolders;
+
+    els.shareLinkIncludeSettingsByDefault.checked = settings.shareLink.includeSettingsByDefault;
   }
 
   els.saveBtn.addEventListener("click", async () => {
@@ -147,6 +150,9 @@
       dashboard: {
         defaultView: els.dashboardDefaultView.value,
         showEmptyFolders: els.dashboardShowEmptyFolders.checked
+      },
+      shareLink: {
+        includeSettingsByDefault: els.shareLinkIncludeSettingsByDefault.checked
       }
     });
     loadedStoragePreference = next.storagePreference;

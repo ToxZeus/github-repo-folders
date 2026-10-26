@@ -9,6 +9,9 @@
   const importReplaceBtn = document.getElementById("importReplaceBtn");
   const importFile = document.getElementById("importFile");
   const settingsBtn = document.getElementById("settingsBtn");
+  const shareLinkBtn = document.getElementById("shareLinkBtn");
+  const importLinkBtn = document.getElementById("importLinkBtn");
+  const shareLinkIncludeSettings = document.getElementById("shareLinkIncludeSettings");
 
   let palette = window.GHRF.PALETTE;
   let pendingColor = palette[0];
@@ -151,6 +154,7 @@
     palette = settings.defaultPalette;
     pendingColor = palette[0];
     renderSwatches(swatchesEl, pendingColor, (c) => (pendingColor = c));
+    shareLinkIncludeSettings.checked = settings.shareLink.includeSettingsByDefault;
   }
   initPalette();
 
@@ -181,6 +185,36 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  shareLinkBtn.addEventListener("click", async () => {
+    try {
+      const data = await window.GHRF.getData();
+      const payload = JSON.parse(window.GHRF.exportJSON(data));
+      if (shareLinkIncludeSettings.checked) {
+        payload.settings = await window.GHRF.getSettings();
+      }
+      const { url, soft } = await window.GHRFShareLink.buildShareLink(JSON.stringify(payload));
+      await navigator.clipboard.writeText(url);
+      window.alert(
+        "Lien copié dans le presse-papiers ✓" +
+          (soft ? "\n\n(Config volumineuse — garde Exporter (JSON) en secours si le lien ne s'ouvre pas.)" : "") +
+          "\n\nCe lien ne s'ouvrira correctement que sur cet appareil."
+      );
+    } catch (err) {
+      window.alert("Impossible de générer le lien : " + err.message);
+    }
+  });
+
+  importLinkBtn.addEventListener("click", () => {
+    const pasted = window.prompt("Colle le lien généré (ou juste la partie après #d=) :");
+    if (!pasted) return;
+    const fragment = window.GHRFShareLink.extractFragmentData(pasted);
+    if (!fragment) {
+      window.alert("Aucune donnée trouvée dans ce texte.");
+      return;
+    }
+    window.open(`${location.origin}/src/import.html#d=${fragment}`, "_blank");
   });
 
   importMergeBtn.addEventListener("click", () => {

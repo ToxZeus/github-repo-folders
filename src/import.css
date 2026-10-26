@@ -1,0 +1,48 @@
+/* Import-page-specific layout. Shared colors/dark-mode/buttons live in
+   theme.css, linked before this file in import.html. */
+
+body {
+  min-height: 100vh;
+}
+
+.ghrf-import-page {
+  max-width: 480px;
+  margin: 40px auto;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ghrf-import-page h1 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.ghrf-import-preview {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  padding: 14px;
+  font-size: 13px;
+}
+
+.ghrf-import-error {
+  color: var(--danger);
+}
+
+.ghrf-import-folder-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ghrf-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}

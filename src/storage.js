@@ -73,6 +73,9 @@
     dashboard: {
       defaultView: "kanban", // "kanban" | "list"
       showEmptyFolders: true
+    },
+    shareLink: {
+      includeSettingsByDefault: false
     }
   };
 
@@ -153,6 +156,14 @@
           : DEFAULT_SETTINGS.dashboard.showEmptyFolders
     };
 
+    const shareLinkIn = s.shareLink && typeof s.shareLink === "object" ? s.shareLink : {};
+    const shareLink = {
+      includeSettingsByDefault:
+        shareLinkIn.includeSettingsByDefault !== undefined
+          ? Boolean(shareLinkIn.includeSettingsByDefault)
+          : DEFAULT_SETTINGS.shareLink.includeSettingsByDefault
+    };
+
     return {
       badgeMetric,
       renderDebounceMs: clampNumber(s.renderDebounceMs, 50, 2000, DEFAULT_SETTINGS.renderDebounceMs),
@@ -165,7 +176,8 @@
       staleness,
       shortcuts,
       nesting,
-      dashboard
+      dashboard,
+      shareLink
     };
   }
 

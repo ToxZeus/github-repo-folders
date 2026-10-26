@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Importer — GitHub Repo Folders</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="import.css" />
+  </head>
+  <body>
+    <div class="ghrf-import-page">
+      <h1>Importer une configuration</h1>
+      <div id="preview" class="ghrf-import-preview"></div>
+      <div id="actions" class="ghrf-save-row ghrf-hidden">
+        <button type="button" id="mergeBtn" class="ghrf-btn ghrf-btn-primary">Importer (fusion)</button>
+        <button type="button" id="replaceBtn" class="ghrf-btn ghrf-btn-danger">Importer (remplacer tout)</button>
+      </div>
+      <p id="resultNote" class="ghrf-hint"></p>
+    </div>
+    <script src="storage.js"></script>
+    <script src="share-link.js"></script>
+    <script src="import.js"></script>
+  </body>
+</html>

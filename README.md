@@ -55,6 +55,11 @@ your browser except through Chrome's own sync mechanism (opt-in, see
   one page (popup → 📊); shows only what's actually stored (folder names,
   assignments, pins, notes) — not language/stars/archived state, which only
   exist on the live GitHub page
+- **Shareable config link** — generate a compressed link encoding your
+  folders/assignments/pins/notes as a quick alternative to JSON export, for
+  backup/restore on the same device (no fixed extension id is pinned, so a
+  generated link isn't expected to open correctly on a different machine —
+  use JSON export/import for that)
 
 ## Install (developer mode)
 
@@ -99,6 +104,14 @@ refresh any open GitHub tab.
   is sharded across several keys to comfortably fit hundreds of tagged repos,
   but beyond that, sync writes can fail — the extension then falls back to
   local-only storage and logs a warning in the console.
+- The shareable config link only opens correctly on the device it was
+  generated on (no manifest-pinned extension id, by choice, to avoid
+  resetting existing users' `chrome.storage` data under a new id). It also
+  refuses to generate past ~32KB compressed — use JSON export for very
+  large configs.
+- The dashboard only shows what's actually stored (folders, assignments,
+  pins, notes) — not language, stars, or archived/fork state, which only
+  exist on the live GitHub page and are never cached.
 
 ## How it works
 
@@ -127,6 +140,11 @@ Plain JavaScript (no build step, no framework), Manifest V3:
   instead.
 - `src/dashboard.html` / `src/dashboard.js` — the kanban/list overview,
   reached from the popup.
+- `src/share-link.js` — gzip compression (native `CompressionStream`) +
+  base64url encoding for the shareable link, shared by the popup and
+  `src/import.html` / `src/import.js` (the receiving page, which previews
+  the payload before reusing `storage.js`'s existing `importJSON`
+  unchanged).
 
 ## Feedback
 
