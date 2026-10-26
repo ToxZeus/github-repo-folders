@@ -30,6 +30,22 @@
   let outsideCloseHandler = null;
   let escCloseHandler = null;
 
+  // Cached rather than fetched per-render: renderAll() runs on every
+  // ~200ms debounce tick and 1.5s safety interval, and most of these
+  // values are only read synchronously inside event handlers (e.g. the
+  // swatch picker), where awaiting a fresh chrome.storage read isn't an
+  // option anyway. Refreshed once at startup and whenever GHRF.onChange
+  // fires (which now also covers the settings key).
+  let settingsCache = null;
+
+  function currentSettings() {
+    return settingsCache || window.GHRF.DEFAULT_SETTINGS_FALLBACK;
+  }
+
+  async function refreshSettingsCache() {
+    settingsCache = await window.GHRF.getSettings();
+  }
+
   // ---------- page adapters ----------
   // The Repositories tab and the Stars tab render repo lists with
   // completely different markup (the former is schema.org itemprop-based,
@@ -131,7 +147,7 @@
     escCloseHandler = null;
   }
 
-  function positionNear(pop, anchorEl) {
+  function positionNear(pop, anchorEl, width) {
     const rect = anchorEl.getBoundingClientRect();
     const scrollX = window.scrollX || window.pageXOffset;
     const scrollY = window.scrollY || window.pageYOffset;
@@ -141,7 +157,7 @@
     pop.style.position = "absolute";
     const top = Math.min(rect.bottom + 6, window.innerHeight - 20);
     pop.style.top = top + scrollY + "px";
-    const maxLeft = window.innerWidth - 272;
+    const maxLeft = window.innerWidth - (width + 32);
     const left = Math.max(8, Math.min(rect.left, maxLeft));
     pop.style.left = left + scrollX + "px";
   }
@@ -150,9 +166,11 @@
     closeAnyPopover();
     const pop = document.createElement("div");
     pop.className = "ghrf-popover";
+    const width = currentSettings().popoverWidth;
+    pop.style.width = width + "px";
     buildFn(pop);
     document.body.appendChild(pop);
-    positionNear(pop, anchorEl);
+    positionNear(pop, anchorEl, width);
 
     outsideCloseHandler = (e) => {
       if (!pop.contains(e.target) && e.target !== anchorEl) closeAnyPopover();
@@ -172,7 +190,7 @@
     const el = document.createElement("div");
     el.className = "ghrf-swatches";
     const buttons = [];
-    window.GHRF.PALETTE.forEach((color) => {
+    currentSettings().defaultPalette.forEach((color) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "ghrf-swatch" + (color === current ? " selected" : "");
@@ -205,7 +223,7 @@
       input.maxLength = 40;
       pop.appendChild(input);
 
-      const swatches = buildSwatchRow(window.GHRF.PALETTE[0]);
+      const swatches = buildSwatchRow(currentSettings().defaultPalette[0]);
       pop.appendChild(swatches.el);
 
       const actions = document.createElement("div");
@@ -381,7 +399,9 @@
         if (visible && adapter.supportsTypeFilters && state.hideForks && info.isFork) visible = false;
         if (visible && state.searchQuery) {
           const q = state.searchQuery.trim().toLowerCase();
-          if (q && !info.fullName.toLowerCase().includes(q)) visible = false;
+          const matchesName = info.fullName.toLowerCase().includes(q);
+          const matchesLanguage = currentSettings().searchMatchLanguageToo && info.language.toLowerCase().includes(q);
+          if (q && !matchesName && !matchesLanguage) visible = false;
         }
         if (visible) {
           row.style.removeProperty("display");
@@ -814,7 +834,7 @@
 
   function scheduleRender() {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(renderAll, 200);
+    debounceTimer = setTimeout(renderAll, currentSettings().renderDebounceMs);
   }
 
   const observer = new MutationObserver(() => {
@@ -833,14 +853,27 @@
   document.addEventListener("turbo:render", scheduleRender);
 
   // Re-render when data changes elsewhere (another tab, or a pull from sync
-  // after an edit made on a different device).
-  window.GHRF.onChange(scheduleRender);
+  // after an edit made on a different device) — also the trigger for
+  // picking up settings changes, since settings now share this same
+  // storage.onChanged plumbing.
+  window.GHRF.onChange(() => {
+    refreshSettingsCache();
+    scheduleRender();
+  });
 
   // Safety net: GitHub's soft navigation can occasionally swap the repo
-  // list without the toolbar surviving; this catches that within ~1.5s.
-  setInterval(() => {
-    if (toolbarNeedsRebuild(getActiveAdapter())) scheduleRender();
-  }, 1500);
+  // list without the toolbar surviving; this catches that within
+  // settings.safetyIntervalMs. Self-rescheduling (rather than
+  // setInterval) so a settings change takes effect on its very next tick
+  // instead of requiring a page reload.
+  function scheduleSafetyCheck() {
+    setTimeout(() => {
+      if (toolbarNeedsRebuild(getActiveAdapter())) scheduleRender();
+      scheduleSafetyCheck();
+    }, currentSettings().safetyIntervalMs);
+  }
+  scheduleSafetyCheck();
 
+  refreshSettingsCache().then(scheduleRender);
   scheduleRender();
 })();

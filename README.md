@@ -32,9 +32,13 @@ your browser except through Chrome's own sync mechanism (opt-in, see
   archived/fork filter there — GitHub's Stars page markup doesn't expose
   that signal)
 - **Custom colors** per folder
-- **Cross-device sync** via `chrome.storage.sync` (follows your Chrome profile)
+- **Cross-device sync** via `chrome.storage.sync` (follows your Chrome profile),
+  with a local-only option if you'd rather not sync
 - **JSON export/import** for manual backup or transfer
 - **Automatic light/dark theme**, matched to GitHub's own active theme
+- **Settings page** — badge metric, refresh timing, popover width, storage
+  preference, default color palette, and search behavior are all adjustable
+  (click the extension icon → ⚙)
 
 ## Install (developer mode)
 
@@ -96,8 +100,14 @@ Plain JavaScript (no build step, no framework), Manifest V3:
 - `src/popup.html` / `src/popup.js` — the toolbar-icon popup for managing
   folders, stats, and import/export.
 - `src/background.js` — a classic (non-module) service worker that reuses
-  `storage.js` via `importScripts` to keep the toolbar icon's badge (pinned
-  repo count) in sync, and to build/handle the right-click context menu.
+  `storage.js` via `importScripts` to keep the toolbar icon's badge in sync
+  (metric configurable in Settings), and to build/handle the right-click
+  context menu.
+- `src/options.html` / `src/options.js` — the Settings page (MV3
+  `options_page`), opened from the popup's ⚙ button.
+- `src/theme.css` — shared colors/dark-mode/buttons for the extension's own
+  standalone pages (popup, options), which can't read GitHub's CSS and so
+  detect dark mode via the OS/browser's `prefers-color-scheme` instead.
 
 ## Feedback
 

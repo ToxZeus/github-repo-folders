@@ -8,13 +8,17 @@
   const importMergeBtn = document.getElementById("importMergeBtn");
   const importReplaceBtn = document.getElementById("importReplaceBtn");
   const importFile = document.getElementById("importFile");
+  const settingsBtn = document.getElementById("settingsBtn");
 
-  let pendingColor = window.GHRF.PALETTE[0];
+  let palette = window.GHRF.PALETTE;
+  let pendingColor = palette[0];
   let pendingMode = "merge";
+
+  settingsBtn.addEventListener("click", () => chrome.runtime.openOptionsPage());
 
   function renderSwatches(container, selected, onPick) {
     container.innerHTML = "";
-    window.GHRF.PALETTE.forEach((color) => {
+    palette.forEach((color) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "ghrf-swatch" + (color === selected ? " selected" : "");
@@ -108,7 +112,13 @@
     });
   }
 
-  renderSwatches(swatchesEl, pendingColor, (c) => (pendingColor = c));
+  async function initPalette() {
+    const settings = await window.GHRF.getSettings();
+    palette = settings.defaultPalette;
+    pendingColor = palette[0];
+    renderSwatches(swatchesEl, pendingColor, (c) => (pendingColor = c));
+  }
+  initPalette();
 
   createBtn.addEventListener("click", async () => {
     const name = nameInput.value.trim();
@@ -167,6 +177,7 @@
   // device), but don't yank the UI out from under an in-progress edit.
   window.GHRF.onChange(() => {
     if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+    initPalette();
     render();
   });
 })();

@@ -39,9 +39,14 @@ ci-dessous).
   signal sur cette page)
 - **Couleurs personnalisables** par dossier
 - **Synchronisation entre appareils** via `chrome.storage.sync` (liée à ton
-  compte Chrome)
+  compte Chrome), avec une option local uniquement si tu préfères ne pas
+  synchroniser
 - **Export/import JSON** pour sauvegarde ou transfert manuel
 - **Thème clair/sombre automatique**, aligné sur le thème actif de GitHub
+- **Page de réglages** — métrique du badge, délais de rafraîchissement,
+  largeur des popovers, préférence de stockage, palette par défaut et
+  comportement de la recherche sont tous ajustables (icône de l'extension →
+  ⚙)
 
 ## Installation (mode développeur)
 
@@ -108,8 +113,14 @@ JavaScript simple (sans build, sans framework), Manifest V3 :
   dossiers, voir les statistiques, et importer/exporter.
 - `src/background.js` — service worker classique (non-module) qui réutilise
   `storage.js` via `importScripts` pour garder à jour le badge de l'icône
-  (nombre de repos épinglés), et pour construire/gérer le menu contextuel
-  clic-droit.
+  (métrique configurable dans les Réglages), et pour construire/gérer le
+  menu contextuel clic-droit.
+- `src/options.html` / `src/options.js` — la page de Réglages (`options_page`
+  MV3), ouverte depuis le bouton ⚙ de la popup.
+- `src/theme.css` — couleurs/mode sombre/boutons partagés pour les pages
+  autonomes de l'extension (popup, réglages), qui ne peuvent pas lire le CSS
+  de GitHub et détectent donc le mode sombre via le
+  `prefers-color-scheme` du système/navigateur.
 
 ## Retours
 

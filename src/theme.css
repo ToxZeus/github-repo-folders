@@ -1,0 +1,103 @@
+/**
+ * Shared base styles for the extension's standalone pages (popup, options,
+ * and future dashboard/import pages) — anything that is NOT injected into
+ * github.com. These pages can't read GitHub's own Primer CSS variables
+ * (content.css does, for the injected toolbar), so this is the one place
+ * light/dark mode is detected via the OS/browser's own
+ * prefers-color-scheme, which is correct here and nowhere else.
+ */
+:root {
+  --bg: #ffffff;
+  --bg-subtle: #f6f8fa;
+  --border: #d0d7de;
+  --fg: #1f2328;
+  --fg-muted: #656d76;
+  --accent: #0969da;
+  --danger: #d1242f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --bg-subtle: #161b22;
+    --border: #30363d;
+    --fg: #e6edf3;
+    --fg-muted: #8b949e;
+    --accent: #4493f8;
+    --danger: #f85149;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 13px/1.4 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.ghrf-hidden {
+  display: none;
+}
+
+.ghrf-hint {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 11px;
+}
+
+.ghrf-icon-btn {
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.ghrf-icon-btn:hover {
+  color: var(--danger);
+}
+
+.ghrf-btn {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ghrf-btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.ghrf-btn-danger {
+  color: var(--danger);
+}
+
+.ghrf-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.ghrf-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ghrf-swatch.selected {
+  border-color: var(--fg);
+}

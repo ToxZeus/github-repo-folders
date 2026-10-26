@@ -12,6 +12,7 @@
 (function (global) {
   const FOLDERS_KEY = "ghrf_folders_v1";
   const PINNED_KEY = "ghrf_pinned_v1";
+  const SETTINGS_KEY = "ghrf_settings_v1";
   const CHUNK_COUNT = 10;
   const LEGACY_LOCAL_KEY = "ghRepoFolders_v1"; // flat format used by v1.0.x (local only)
 
@@ -27,6 +28,68 @@
     "#6e7781", // gris
     "#1a7f37" // vert foncé
   ];
+
+  // Grows phase by phase as new settings are introduced; any key missing
+  // from a stored blob (older install, or a brand new one) transparently
+  // falls back to its default here, so no version-bumped migration is
+  // needed the way folders/assignments required.
+  const DEFAULT_SETTINGS = {
+    badgeMetric: "pinned", // "pinned" | "tagged" | "both"
+    renderDebounceMs: 200,
+    safetyIntervalMs: 1500,
+    popoverWidth: 240,
+    storagePreference: "sync", // "sync" | "local-only"
+    defaultPalette: [
+      "#e05d44",
+      "#f1a33c",
+      "#e8c547",
+      "#57ab5a",
+      "#2ea3c7",
+      "#4184e4",
+      "#8957e5",
+      "#d6409f",
+      "#6e7781",
+      "#1a7f37"
+    ],
+    searchMatchLanguageToo: false
+  };
+
+  function clampNumber(value, min, max, fallback) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+  }
+
+  // Never trust a stored blob as-is: it may be hand-edited, from an older
+  // version, or corrupted. Every field is validated/clamped against its own
+  // bounds, and unknown keys are dropped rather than passed through.
+  function sanitizeSettings(partial) {
+    const s = Object.assign({}, DEFAULT_SETTINGS, partial && typeof partial === "object" ? partial : {});
+    const badgeMetric = ["pinned", "tagged", "both"].includes(s.badgeMetric)
+      ? s.badgeMetric
+      : DEFAULT_SETTINGS.badgeMetric;
+    const storagePreference = ["sync", "local-only"].includes(s.storagePreference)
+      ? s.storagePreference
+      : DEFAULT_SETTINGS.storagePreference;
+    const isHex = (c) => typeof c === "string" && /^#[0-9a-fA-F]{6}$/.test(c);
+    const defaultPalette =
+      Array.isArray(s.defaultPalette) && s.defaultPalette.length && s.defaultPalette.every(isHex)
+        ? s.defaultPalette.slice(0, 20)
+        : DEFAULT_SETTINGS.defaultPalette.slice();
+    return {
+      badgeMetric,
+      renderDebounceMs: clampNumber(s.renderDebounceMs, 50, 2000, DEFAULT_SETTINGS.renderDebounceMs),
+      safetyIntervalMs: clampNumber(s.safetyIntervalMs, 500, 10000, DEFAULT_SETTINGS.safetyIntervalMs),
+      popoverWidth: clampNumber(s.popoverWidth, 180, 400, DEFAULT_SETTINGS.popoverWidth),
+      storagePreference,
+      defaultPalette,
+      searchMatchLanguageToo: Boolean(s.searchMatchLanguageToo)
+    };
+  }
+
+  function primaryAreaFor(storagePreference) {
+    return storagePreference === "local-only" ? chrome.storage.local : chrome.storage.sync;
+  }
 
   function chunkKey(i) {
     return `ghrf_assign_${i}_v1`;
@@ -79,9 +142,9 @@
     return chunks;
   }
 
-  async function readFromSync() {
+  async function readBulkData(area) {
     const keys = [FOLDERS_KEY, PINNED_KEY, ...allChunkKeys()];
-    const res = await storageGet(chrome.storage.sync, keys);
+    const res = await storageGet(area, keys);
     const folders = Array.isArray(res[FOLDERS_KEY]) ? res[FOLDERS_KEY] : null;
     const pinned = Array.isArray(res[PINNED_KEY]) ? res[PINNED_KEY] : [];
     const assignments = {};
@@ -92,7 +155,7 @@
     return { folders, assignments, pinned };
   }
 
-  async function writeData(data) {
+  function buildBulkPayload(data) {
     const payload = {
       [FOLDERS_KEY]: data.folders || [],
       [PINNED_KEY]: data.pinned || []
@@ -100,19 +163,27 @@
     splitAssignmentsIntoChunks(data.assignments).forEach((chunk, i) => {
       payload[chunkKey(i)] = chunk;
     });
+    return payload;
+  }
+
+  async function writeData(data) {
+    const settings = await getSettings();
+    const area = primaryAreaFor(settings.storagePreference);
+    const payload = buildBulkPayload(data);
 
     try {
-      await storageSet(chrome.storage.sync, payload);
+      await storageSet(area, payload);
     } catch (err) {
       console.error(
-        "[GitHub Repo Folders] Synchronisation impossible (quota dépassé ?). " +
+        "[GitHub Repo Folders] Écriture impossible (quota dépassé ?). " +
           "Les données sont gardées en local sur cet appareil seulement.",
         err
       );
       await storageSet(chrome.storage.local, payload).catch(() => {});
     }
 
-    // Safety mirror in the old flat format, in case sync data ever gets wiped.
+    // Safety mirror in the old flat format, in case the primary area ever
+    // gets wiped. Always local, regardless of storagePreference.
     storageSet(chrome.storage.local, { [LEGACY_LOCAL_KEY]: data }).catch(() => {});
   }
 
@@ -130,7 +201,9 @@
   }
 
   async function getData() {
-    const current = await readFromSync();
+    const settings = await getSettings();
+    const area = primaryAreaFor(settings.storagePreference);
+    const current = await readBulkData(area);
     if (current.folders !== null) {
       return { folders: current.folders, assignments: current.assignments, pinned: current.pinned };
     }
@@ -140,6 +213,43 @@
 
   function setData(data) {
     return writeData(data);
+  }
+
+  async function getSettings() {
+    const res = await storageGet(chrome.storage.sync, [SETTINGS_KEY]);
+    return sanitizeSettings(res[SETTINGS_KEY]);
+  }
+
+  async function setSettings(partial) {
+    const current = await getSettings();
+    const next = sanitizeSettings(Object.assign({}, current, partial));
+
+    try {
+      await storageSet(chrome.storage.sync, { [SETTINGS_KEY]: next });
+    } catch (err) {
+      console.error("[GitHub Repo Folders] Impossible d'enregistrer les réglages.", err);
+      await storageSet(chrome.storage.local, { [SETTINGS_KEY]: next }).catch(() => {});
+    }
+
+    // Switching storage preference shouldn't make existing data appear to
+    // vanish: copy it into the newly selected area. The old area is left
+    // untouched as a backup, never deleted.
+    if (current.storagePreference !== next.storagePreference) {
+      const oldArea = primaryAreaFor(current.storagePreference);
+      const bulk = await readBulkData(oldArea);
+      if (bulk.folders !== null) {
+        const newArea = primaryAreaFor(next.storagePreference);
+        const payload = buildBulkPayload(bulk);
+        await storageSet(newArea, payload).catch((err) => {
+          console.error(
+            "[GitHub Repo Folders] Impossible de copier les données vers la nouvelle zone de stockage.",
+            err
+          );
+        });
+      }
+    }
+
+    return next;
   }
 
   function nextColor(data) {
@@ -313,7 +423,7 @@
   }
 
   function onChange(callback) {
-    const keysOfInterest = new Set([FOLDERS_KEY, PINNED_KEY, ...allChunkKeys()]);
+    const keysOfInterest = new Set([FOLDERS_KEY, PINNED_KEY, SETTINGS_KEY, ...allChunkKeys()]);
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName !== "sync" && areaName !== "local") return;
       const touched = Object.keys(changes).some((k) => keysOfInterest.has(k));
@@ -323,6 +433,7 @@
 
   global.GHRF = {
     PALETTE,
+    DEFAULT_SETTINGS_FALLBACK: sanitizeSettings(DEFAULT_SETTINGS),
     getData,
     setData,
     addFolder,
@@ -337,6 +448,8 @@
     togglePin,
     exportJSON,
     importJSON,
+    getSettings,
+    setSettings,
     onChange
   };
 })(typeof window !== "undefined" ? window : this);

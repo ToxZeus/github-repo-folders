@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Réglages — GitHub Repo Folders</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="ghrf-options">
+      <header class="ghrf-options-header">
+        <h1>GitHub Repo Folders — Réglages</h1>
+        <p class="ghrf-hint">
+          Les réglages sont synchronisés via ton compte Chrome, comme le reste des données de l'extension.
+        </p>
+      </header>
+
+      <section class="ghrf-settings-section">
+        <h2>Général</h2>
+
+        <label class="ghrf-field">
+          <span class="ghrf-field-label">Badge sur l'icône de l'extension</span>
+          <select id="badgeMetric">
+            <option value="pinned">Nombre de repos épinglés</option>
+            <option value="tagged">Nombre de repos classés dans un dossier</option>
+            <option value="both">Les deux, additionnés</option>
+          </select>
+        </label>
+
+        <label class="ghrf-field">
+          <span class="ghrf-field-label">Délai de rafraîchissement de la barre d'outils (ms)</span>
+          <input type="number" id="renderDebounceMs" min="50" max="2000" step="50" />
+          <span class="ghrf-hint">Plus bas = plus réactif, plus haut = moins de recalculs.</span>
+        </label>
+
+        <label class="ghrf-field">
+          <span class="ghrf-field-label">Intervalle de sécurité anti-navigation (ms)</span>
+          <input type="number" id="safetyIntervalMs" min="500" max="10000" step="100" />
+          <span class="ghrf-hint">
+            Vérifie régulièrement que la barre d'outils est toujours affichée après une navigation GitHub.
+          </span>
+        </label>
+
+        <label class="ghrf-field">
+          <span class="ghrf-field-label">Largeur des popovers (px)</span>
+          <input type="number" id="popoverWidth" min="180" max="400" step="10" />
+        </label>
+
+        <label class="ghrf-field">
+          <span class="ghrf-field-label">Stockage des dossiers et affectations</span>
+          <select id="storagePreference">
+            <option value="sync">Synchronisé entre appareils</option>
+            <option value="local-only">Local uniquement (cet appareil seulement)</option>
+          </select>
+          <span class="ghrf-hint">
+            Changer ce réglage copie tes données actuelles vers la nouvelle zone de stockage. L'ancienne copie
+            n'est jamais supprimée, par sécurité.
+          </span>
+        </label>
+
+        <label class="ghrf-field ghrf-field-checkbox">
+          <input type="checkbox" id="searchMatchLanguageToo" />
+          <span>La recherche filtre aussi par langage (pas seulement par nom de repo)</span>
+        </label>
+
+        <div class="ghrf-field">
+          <span class="ghrf-field-label">Palette de couleurs par défaut</span>
+          <div id="paletteList" class="ghrf-palette-list"></div>
+          <div class="ghrf-palette-actions">
+            <button type="button" id="addPaletteColorBtn" class="ghrf-btn">+ Ajouter une couleur</button>
+            <button type="button" id="resetPaletteBtn" class="ghrf-btn">Réinitialiser la palette</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="ghrf-save-row">
+        <button type="button" id="saveBtn" class="ghrf-btn ghrf-btn-primary">Enregistrer</button>
+        <span id="savedNote" class="ghrf-hint ghrf-hidden">Enregistré ✓</span>
+      </div>
+    </div>
+    <script src="storage.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

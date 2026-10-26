@@ -3,11 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <title>GitHub Repo Folders</title>
+    <link rel="stylesheet" href="theme.css" />
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <div class="ghrf-popup">
-      <header class="ghrf-popup-header">GitHub Repo Folders</header>
+      <header class="ghrf-popup-header">
+        <span>GitHub Repo Folders</span>
+        <button id="settingsBtn" class="ghrf-settings-btn" type="button" title="Réglages" aria-label="Réglages">
+          ⚙
+        </button>
+      </header>
       <div id="stats" class="ghrf-stats"></div>
       <div class="ghrf-sync-note">🔄 Synchronisé via ton compte Chrome</div>
 

@@ -14,8 +14,14 @@ importScripts("storage.js");
 const BADGE_COLOR = "#0969da";
 
 async function updateBadge() {
-  const data = await self.GHRF.getData();
-  const count = (data.pinned || []).length;
+  const [data, settings] = await Promise.all([self.GHRF.getData(), self.GHRF.getSettings()]);
+  const pinnedCount = (data.pinned || []).length;
+  const taggedCount = Object.keys(data.assignments || {}).length;
+  let count;
+  if (settings.badgeMetric === "tagged") count = taggedCount;
+  else if (settings.badgeMetric === "both") count = pinnedCount + taggedCount;
+  else count = pinnedCount;
+
   await chrome.action.setBadgeText({ text: count > 0 ? String(count) : "" });
   if (count > 0) {
     await chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });

@@ -1,35 +1,8 @@
-:root {
-  --bg: #ffffff;
-  --bg-subtle: #f6f8fa;
-  --border: #d0d7de;
-  --fg: #1f2328;
-  --fg-muted: #656d76;
-  --accent: #0969da;
-  --danger: #d1242f;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d1117;
-    --bg-subtle: #161b22;
-    --border: #30363d;
-    --fg: #e6edf3;
-    --fg-muted: #8b949e;
-    --accent: #4493f8;
-    --danger: #f85149;
-  }
-}
-
-* {
-  box-sizing: border-box;
-}
+/* Popup-specific layout. Shared colors/dark-mode/buttons/swatches live in
+   theme.css, linked before this file in popup.html. */
 
 body {
-  margin: 0;
   width: 300px;
-  background: var(--bg);
-  color: var(--fg);
-  font: 13px/1.4 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .ghrf-popup {
@@ -40,6 +13,10 @@ body {
 }
 
 .ghrf-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-weight: 600;
   font-size: 14px;
 }
@@ -103,25 +80,8 @@ body {
   text-align: right;
 }
 
-.ghrf-icon-btn {
-  border: none;
-  background: transparent;
-  color: var(--fg-muted);
-  cursor: pointer;
-  font-size: 12px;
-  padding: 2px 4px;
-}
-
-.ghrf-icon-btn:hover {
-  color: var(--danger);
-}
-
 .ghrf-inline-swatches {
   margin: -2px 0 2px 22px;
-}
-
-.ghrf-hidden {
-  display: none;
 }
 
 .ghrf-new-folder {
@@ -142,46 +102,6 @@ body {
   font-size: 13px;
 }
 
-.ghrf-swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.ghrf-swatch {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  padding: 0;
-  cursor: pointer;
-}
-
-.ghrf-swatch.selected {
-  border-color: var(--fg);
-}
-
-.ghrf-btn {
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--bg-subtle);
-  color: var(--fg);
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.ghrf-btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-
-.ghrf-btn-danger {
-  color: var(--danger);
-}
-
 .ghrf-actions {
   display: flex;
   flex-wrap: wrap;
@@ -190,8 +110,16 @@ body {
   border-top: 1px solid var(--border);
 }
 
-.ghrf-hint {
-  margin: 0;
+.ghrf-settings-btn {
+  border: none;
+  background: transparent;
   color: var(--fg-muted);
-  font-size: 11px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.ghrf-settings-btn:hover {
+  color: var(--fg);
 }
