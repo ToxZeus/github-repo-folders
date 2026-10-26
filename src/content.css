@@ -1,0 +1,260 @@
+/* GitHub Repo Folders — uses GitHub's own Primer CSS variables so it
+   automatically matches light/dark/dimmed themes without detection logic. */
+
+.ghrf-toolbar {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-default, #d0d7de);
+  border-radius: 6px;
+  background: var(--color-canvas-subtle, #f6f8fa);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.ghrf-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ghrf-chip,
+.ghrf-chip-all,
+.ghrf-add-folder-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 14px;
+  border: 1px solid var(--color-border-default, #d0d7de);
+  background: var(--color-canvas-default, #fff);
+  color: var(--color-fg-default, #1f2328);
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ghrf-chip:hover,
+.ghrf-chip-all:hover,
+.ghrf-add-folder-btn:hover {
+  border-color: var(--color-accent-fg, #0969da);
+}
+
+.ghrf-chip.active,
+.ghrf-chip-all.active {
+  background: var(--color-accent-subtle, #ddf4ff);
+  border-color: var(--color-accent-fg, #0969da);
+  color: var(--color-accent-fg, #0969da);
+}
+
+.ghrf-chip.ghrf-drop-hover {
+  border-color: var(--color-success-fg, #1a7f37);
+  box-shadow: 0 0 0 2px var(--color-success-subtle, #d4f8d4);
+}
+
+.ghrf-chip-dot,
+.ghrf-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  display: inline-block;
+}
+
+.ghrf-chip-count {
+  color: var(--color-fg-muted, #656d76);
+  font-size: 11px;
+}
+
+.ghrf-chip-edit {
+  border: none;
+  background: transparent;
+  color: var(--color-fg-muted, #656d76);
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  font-size: 13px;
+}
+
+.ghrf-chip-edit:hover {
+  color: var(--color-fg-default, #1f2328);
+}
+
+.ghrf-add-folder-btn {
+  color: var(--color-accent-fg, #0969da);
+  border-style: dashed;
+}
+
+.ghrf-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border-muted, #d8dee4);
+}
+
+.ghrf-lang-select {
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-default, #d0d7de);
+  background: var(--color-canvas-default, #fff);
+  color: var(--color-fg-default, #1f2328);
+  font-size: 12px;
+  padding: 0 6px;
+}
+
+.ghrf-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-fg-default, #1f2328);
+  cursor: pointer;
+}
+
+.ghrf-count-label {
+  margin-left: auto;
+  color: var(--color-fg-muted, #656d76);
+}
+
+/* per-repo controls */
+
+.ghrf-li-anchor {
+  position: relative;
+}
+
+.ghrf-li-anchor a {
+  -webkit-user-drag: none;
+}
+
+.ghrf-li-anchor.ghrf-dragging {
+  opacity: 0.5;
+}
+
+.ghrf-repo-controls {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+.ghrf-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-fg-muted, #656d76);
+  cursor: pointer;
+}
+
+.ghrf-badge-btn:hover {
+  background: var(--color-canvas-subtle, #f6f8fa);
+  border-color: var(--color-border-default, #d0d7de);
+  color: var(--color-fg-default, #1f2328);
+}
+
+.ghrf-title-dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* popovers */
+
+.ghrf-popover {
+  position: fixed;
+  z-index: 10000;
+  width: 240px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-default, #d0d7de);
+  background: var(--color-canvas-overlay, #fff);
+  box-shadow: 0 8px 24px var(--color-shadow-medium, rgba(140, 149, 159, 0.3));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-fg-default, #1f2328);
+}
+
+.ghrf-popover-title {
+  font-weight: 600;
+}
+
+.ghrf-popover-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-default, #d0d7de);
+  background: var(--color-canvas-default, #fff);
+  color: var(--color-fg-default, #1f2328);
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.ghrf-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ghrf-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ghrf-swatch.selected {
+  border-color: var(--color-fg-default, #1f2328);
+}
+
+.ghrf-popover-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.ghrf-btn {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-default, #d0d7de);
+  background: var(--color-canvas-subtle, #f6f8fa);
+  color: var(--color-fg-default, #1f2328);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ghrf-btn-primary {
+  background: var(--color-accent-emphasis, #0969da);
+  border-color: var(--color-accent-emphasis, #0969da);
+  color: #fff;
+}
+
+.ghrf-btn-danger {
+  color: var(--color-danger-fg, #d1242f);
+}
+
+.ghrf-check-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.ghrf-popover-empty {
+  color: var(--color-fg-muted, #656d76);
+}

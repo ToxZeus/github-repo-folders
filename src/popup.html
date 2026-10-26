@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>GitHub Repo Folders</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="ghrf-popup">
+      <header class="ghrf-popup-header">GitHub Repo Folders</header>
+      <div id="stats" class="ghrf-stats"></div>
+
+      <div id="folderList" class="ghrf-folder-list"></div>
+
+      <div class="ghrf-new-folder">
+        <input id="newFolderName" type="text" placeholder="Nouveau dossier..." maxlength="40" />
+        <div id="newFolderSwatches" class="ghrf-swatches"></div>
+        <button id="createFolderBtn" class="ghrf-btn ghrf-btn-primary" type="button">Créer</button>
+      </div>
+
+      <div class="ghrf-actions">
+        <button id="exportBtn" class="ghrf-btn" type="button">Exporter (JSON)</button>
+        <button id="importMergeBtn" class="ghrf-btn" type="button">Importer (fusion)</button>
+        <button id="importReplaceBtn" class="ghrf-btn ghrf-btn-danger" type="button">Importer (remplacer)</button>
+        <input id="importFile" type="file" accept="application/json" hidden />
+      </div>
+
+      <p class="ghrf-hint">
+        Va sur ton profil GitHub → onglet <em>Repositories</em> pour classer tes repos (glisser-déposer sur un
+        dossier, ou bouton dossier sur chaque repo).
+      </p>
+    </div>
+    <script src="storage.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
