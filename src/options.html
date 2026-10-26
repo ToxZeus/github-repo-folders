@@ -142,6 +142,22 @@
         </label>
       </section>
 
+      <section class="ghrf-settings-section">
+        <h2>Sous-dossiers</h2>
+
+        <label class="ghrf-field">
+          <span class="ghrf-field-label">Style d'affichage</span>
+          <select id="nestingDisplayStyle">
+            <option value="indent">Indenté sous le parent</option>
+            <option value="grouped">Regroupé visuellement (fond teinté)</option>
+          </select>
+        </label>
+        <p class="ghrf-hint">
+          Un sous-dossier se crée depuis le menu « ⋯ » d'un dossier (sur la page GitHub ou dans cette popup) : choisis
+          son dossier parent. Un seul niveau de profondeur est permis.
+        </p>
+      </section>
+
       <div class="ghrf-save-row">
         <button type="button" id="saveBtn" class="ghrf-btn ghrf-btn-primary">Enregistrer</button>
         <span id="savedNote" class="ghrf-hint ghrf-hidden">Enregistré ✓</span>

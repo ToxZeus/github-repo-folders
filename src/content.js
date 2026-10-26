@@ -271,7 +271,7 @@
     });
   }
 
-  function openEditFolderPopover(anchorEl, folder, onDone) {
+  function openEditFolderPopover(anchorEl, folder, allFolders, onDone) {
     openPopover(anchorEl, (pop) => {
       pop.classList.add("ghrf-popover-form");
 
@@ -290,6 +290,37 @@
 
       const swatches = buildSwatchRow(folder.color);
       pop.appendChild(swatches.el);
+
+      // Nesting is capped at one level: this folder can only become a
+      // child if it doesn't itself have children, and it can only be
+      // nested under a top-level (parentless) folder other than itself.
+      const hasChildren = allFolders.some((f) => f.parentId === folder.id);
+      const eligibleParents = allFolders.filter((f) => !f.parentId && f.id !== folder.id);
+      if (!hasChildren && eligibleParents.length > 0) {
+        const parentLabel = document.createElement("label");
+        parentLabel.className = "ghrf-popover-label";
+        parentLabel.textContent = "Dossier parent";
+        pop.appendChild(parentLabel);
+
+        const parentSelect = document.createElement("select");
+        parentSelect.className = "ghrf-popover-input";
+        const noneOpt = document.createElement("option");
+        noneOpt.value = "";
+        noneOpt.textContent = "Aucun (dossier de premier niveau)";
+        parentSelect.appendChild(noneOpt);
+        eligibleParents.forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name;
+          if (folder.parentId === p.id) opt.selected = true;
+          parentSelect.appendChild(opt);
+        });
+        parentSelect.addEventListener("change", async () => {
+          await window.GHRF.setFolderParent(folder.id, parentSelect.value || null);
+          onDone();
+        });
+        pop.appendChild(parentSelect);
+      }
 
       const actions = document.createElement("div");
       actions.className = "ghrf-popover-actions";
@@ -348,9 +379,9 @@
       }
 
       const assigned = new Set(data.assignments[fullName] || []);
-      data.folders.forEach((folder) => {
+      window.GHRF.getDisplayOrderedFolders(data.folders).forEach((folder) => {
         const row = document.createElement("label");
-        row.className = "ghrf-check-row";
+        row.className = "ghrf-check-row" + (folder.parentId ? " ghrf-check-row-child" : "");
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.checked = assigned.has(folder.id);
@@ -467,14 +498,20 @@
   function applyFilters(adapter, container) {
     window.GHRF.getData().then((data) => {
       const rows = adapter.getRows(container);
+      // Filtering by a parent folder also matches repos tagged into any of
+      // its children — that's the actual payoff of nesting ("Travail"
+      // should show everything under it, including "Client A").
+      const activeFolderIds = state.activeFolderId
+        ? [state.activeFolderId, ...data.folders.filter((f) => f.parentId === state.activeFolderId).map((f) => f.id)]
+        : null;
       let shown = 0;
       rows.forEach((row) => {
         const info = adapter.extractInfo(row);
         if (!info) return;
         let visible = true;
-        if (state.activeFolderId) {
+        if (activeFolderIds) {
           const ids = data.assignments[info.fullName] || [];
-          if (!ids.includes(state.activeFolderId)) visible = false;
+          if (!ids.some((id) => activeFolderIds.includes(id))) visible = false;
         }
         if (visible && state.language && info.language !== state.language) visible = false;
         if (visible && adapter.supportsTypeFilters && state.hideArchived && info.isArchived) visible = false;
@@ -504,6 +541,33 @@
     });
   }
 
+  // Native <optgroup> is a near-perfect fit for exactly-one-level nesting
+  // in a <select>: the parent is still its own selectable option (so you
+  // can assign straight to a parent that has children), its children sit
+  // grouped right under it.
+  function populateFolderSelect(selectEl, folders) {
+    folders
+      .filter((f) => !f.parentId)
+      .forEach((parent) => {
+        const parentOpt = document.createElement("option");
+        parentOpt.value = parent.id;
+        parentOpt.textContent = parent.name;
+        selectEl.appendChild(parentOpt);
+
+        const children = folders.filter((f) => f.parentId === parent.id);
+        if (children.length === 0) return;
+        const group = document.createElement("optgroup");
+        group.label = parent.name;
+        children.forEach((child) => {
+          const opt = document.createElement("option");
+          opt.value = child.id;
+          opt.textContent = child.name;
+          group.appendChild(opt);
+        });
+        selectEl.appendChild(group);
+      });
+  }
+
   function renderToolbar(adapter, data, container) {
     const prevSearch = toolbarEl.querySelector(".ghrf-search-input");
     const searchHadFocus = !!prevSearch && prevSearch === document.activeElement;
@@ -525,10 +589,17 @@
     });
     chipsRow.appendChild(allChip);
 
-    data.folders.forEach((folder, folderIdx) => {
+    const nestingStyle = currentSettings().nesting.displayStyle;
+    chipsRow.classList.toggle("ghrf-nesting-grouped", nestingStyle === "grouped");
+
+    const displayFolders = window.GHRF.getDisplayOrderedFolders(data.folders);
+    displayFolders.forEach((folder, folderIdx) => {
       const count = Object.values(data.assignments).filter((ids) => ids.includes(folder.id)).length;
       const chip = document.createElement("div");
-      chip.className = "ghrf-chip" + (state.activeFolderId === folder.id ? " active" : "");
+      chip.className =
+        "ghrf-chip" +
+        (state.activeFolderId === folder.id ? " active" : "") +
+        (folder.parentId ? " ghrf-chip-child" : "");
 
       if (currentSettings().shortcuts.showNumberBadges && folderIdx < 9) {
         const numBadge = document.createElement("span");
@@ -559,7 +630,7 @@
       editBtn.textContent = "⋯";
       editBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        openEditFolderPopover(editBtn, folder, renderAll);
+        openEditFolderPopover(editBtn, folder, data.folders, renderAll);
       });
       chip.appendChild(editBtn);
 
@@ -652,12 +723,7 @@
         bulkSelect.appendChild(opt);
         bulkSelect.disabled = true;
       } else {
-        data.folders.forEach((folder) => {
-          const opt = document.createElement("option");
-          opt.value = folder.id;
-          opt.textContent = folder.name;
-          bulkSelect.appendChild(opt);
-        });
+        populateFolderSelect(bulkSelect, data.folders);
       }
       bulkRow.appendChild(bulkSelect);
 
@@ -1033,7 +1099,10 @@
     if (!Number.isInteger(n) || n < 1 || n > 9) return;
 
     const data = await window.GHRF.getData();
-    const folder = data.folders[n - 1];
+    // Same "parent, then its children" order the chip row and its number
+    // badges use, not raw storage order — otherwise nesting would silently
+    // desync the badges from what pressing a digit actually does.
+    const folder = window.GHRF.getDisplayOrderedFolders(data.folders)[n - 1];
     if (!folder) return;
 
     e.preventDefault();

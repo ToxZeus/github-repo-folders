@@ -102,7 +102,8 @@ async function buildMenus() {
     documentUrlPatterns: MENU_URL_PATTERNS
   });
 
-  for (const folder of data.folders) {
+  const topLevel = data.folders.filter((f) => !f.parentId);
+  for (const folder of topLevel) {
     await createMenu({
       id: `ghrf-add-${folder.id}`,
       parentId: ADD_PARENT_ID,
@@ -117,6 +118,45 @@ async function buildMenus() {
       contexts: ["link"],
       documentUrlPatterns: MENU_URL_PATTERNS
     });
+
+    const children = data.folders.filter((f) => f.parentId === folder.id);
+    if (children.length === 0) continue;
+
+    // A native context-menu item that has its own children generally stops
+    // being directly clickable (it just opens the submenu) — add an
+    // explicit leaf so a parent-with-children can still be assigned to
+    // directly, not just its children.
+    await createMenu({
+      id: `ghrf-add-self-${folder.id}`,
+      parentId: `ghrf-add-${folder.id}`,
+      title: "(ce dossier)",
+      contexts: ["link"],
+      documentUrlPatterns: MENU_URL_PATTERNS
+    });
+    await createMenu({
+      id: `ghrf-remove-self-${folder.id}`,
+      parentId: `ghrf-remove-${folder.id}`,
+      title: "(ce dossier)",
+      contexts: ["link"],
+      documentUrlPatterns: MENU_URL_PATTERNS
+    });
+
+    for (const child of children) {
+      await createMenu({
+        id: `ghrf-add-${child.id}`,
+        parentId: `ghrf-add-${folder.id}`,
+        title: child.name,
+        contexts: ["link"],
+        documentUrlPatterns: MENU_URL_PATTERNS
+      });
+      await createMenu({
+        id: `ghrf-remove-${child.id}`,
+        parentId: `ghrf-remove-${folder.id}`,
+        title: child.name,
+        contexts: ["link"],
+        documentUrlPatterns: MENU_URL_PATTERNS
+      });
+    }
   }
 }
 
@@ -124,11 +164,27 @@ chrome.contextMenus.onClicked.addListener(async (info) => {
   const id = info.menuItemId;
   if (typeof id !== "string") return;
 
-  const isAdd = id.startsWith("ghrf-add-");
-  const isRemove = !isAdd && id.startsWith("ghrf-remove-");
-  if (!isAdd && !isRemove) return;
+  // Check the "-self-" (parent-with-children leaf) prefixes before the
+  // plain ones, since e.g. "ghrf-add-self-X" also starts with "ghrf-add-".
+  let isAdd = false;
+  let isRemove = false;
+  let folderId = null;
+  if (id.startsWith("ghrf-add-self-")) {
+    isAdd = true;
+    folderId = id.slice("ghrf-add-self-".length);
+  } else if (id.startsWith("ghrf-remove-self-")) {
+    isRemove = true;
+    folderId = id.slice("ghrf-remove-self-".length);
+  } else if (id.startsWith("ghrf-add-")) {
+    isAdd = true;
+    folderId = id.slice("ghrf-add-".length);
+  } else if (id.startsWith("ghrf-remove-")) {
+    isRemove = true;
+    folderId = id.slice("ghrf-remove-".length);
+  } else {
+    return;
+  }
 
-  const folderId = id.slice(isAdd ? "ghrf-add-".length : "ghrf-remove-".length);
   const fullName = extractRepoFullName(info.linkUrl);
   if (!fullName) return;
 

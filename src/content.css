@@ -393,8 +393,35 @@
   cursor: pointer;
 }
 
+.ghrf-check-row-child {
+  margin-left: 16px;
+}
+
 .ghrf-popover-empty {
   color: var(--fgColor-muted, #59636e);
+}
+
+.ghrf-popover-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fgColor-muted, #59636e);
+}
+
+/* nested folders: default "indent" style */
+.ghrf-chip-child {
+  margin-left: 14px;
+}
+
+.ghrf-chip-child .ghrf-chip-dot {
+  opacity: 0.8;
+}
+
+/* "grouped" style: children get a light tinted background instead of an
+   indent, visually clustering them with their parent. */
+.ghrf-nesting-grouped .ghrf-chip-child {
+  margin-left: 4px;
+  background: var(--bgColor-muted, #f6f8fa);
+  border-style: dashed;
 }
 
 .ghrf-sync-note {

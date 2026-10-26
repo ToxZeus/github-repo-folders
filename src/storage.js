@@ -66,6 +66,9 @@
       enabled: true,
       showNumberBadges: true,
       modifier: "none" // "none" | "alt" | "shift"
+    },
+    nesting: {
+      displayStyle: "indent" // "indent" | "grouped"
     }
   };
 
@@ -128,6 +131,13 @@
         : DEFAULT_SETTINGS.shortcuts.modifier
     };
 
+    const nestingIn = s.nesting && typeof s.nesting === "object" ? s.nesting : {};
+    const nesting = {
+      displayStyle: ["indent", "grouped"].includes(nestingIn.displayStyle)
+        ? nestingIn.displayStyle
+        : DEFAULT_SETTINGS.nesting.displayStyle
+    };
+
     return {
       badgeMetric,
       renderDebounceMs: clampNumber(s.renderDebounceMs, 50, 2000, DEFAULT_SETTINGS.renderDebounceMs),
@@ -138,7 +148,8 @@
       searchMatchLanguageToo: Boolean(s.searchMatchLanguageToo),
       notes,
       staleness,
-      shortcuts
+      shortcuts,
+      nesting
     };
   }
 
@@ -343,6 +354,22 @@
     return next;
   }
 
+  // Single source of truth for "parent, then its children" display order —
+  // used by the toolbar's chip row, the 1-9 keyboard shortcut mapping, and
+  // anywhere else that needs to show folders grouped rather than in raw
+  // storage order. The underlying array order itself is never touched.
+  function getDisplayOrderedFolders(folders) {
+    const ordered = [];
+    folders.filter((f) => !f.parentId).forEach((parent) => {
+      ordered.push(parent);
+      folders.filter((f) => f.parentId === parent.id).forEach((child) => ordered.push(child));
+    });
+    folders.forEach((f) => {
+      if (!ordered.includes(f)) ordered.push(f); // orphaned parentId reference: still show it
+    });
+    return ordered;
+  }
+
   function nextColor(data) {
     const used = data.folders.map((f) => f.color);
     const free = PALETTE.find((c) => !used.includes(c));
@@ -354,11 +381,34 @@
     const folder = {
       id: genId(),
       name: name.trim().slice(0, 40) || "Dossier",
-      color: color || nextColor(data)
+      color: color || nextColor(data),
+      parentId: null
     };
     data.folders.push(folder);
     await setData(data);
     return folder;
+  }
+
+  function folderHasChildren(data, id) {
+    return data.folders.some((f) => f.parentId === id);
+  }
+
+  // Nesting is capped at exactly one level: a folder with children can't
+  // itself become a child, and a folder can only be nested under a
+  // top-level (parentless) folder.
+  async function setFolderParent(id, parentId) {
+    const data = await getData();
+    const folder = data.folders.find((f) => f.id === id);
+    if (!folder || id === parentId) return data;
+
+    if (parentId) {
+      const parent = data.folders.find((f) => f.id === parentId);
+      if (!parent || parent.parentId || folderHasChildren(data, id)) return data;
+    }
+
+    folder.parentId = parentId || null;
+    await setData(data);
+    return data;
   }
 
   async function reorderFolders(orderedIds) {
@@ -395,6 +445,11 @@
 
   async function deleteFolder(id) {
     const data = await getData();
+    // Children aren't deleted, just promoted to top-level — same
+    // "declassify, don't destroy" philosophy already used for repos below.
+    data.folders.forEach((f) => {
+      if (f.parentId === id) f.parentId = null;
+    });
     data.folders = data.folders.filter((f) => f.id !== id);
     for (const repo of Object.keys(data.assignments)) {
       data.assignments[repo] = data.assignments[repo].filter((fid) => fid !== id);
@@ -500,7 +555,7 @@
 
     if (mode === "replace") {
       const replaced = {
-        folders: parsed.folders,
+        folders: parsed.folders.map((f) => ({ ...f, parentId: f.parentId || null })),
         assignments: parsed.assignments,
         pinned: parsedPinned,
         notes: parsedNotes
@@ -521,8 +576,23 @@
       } else {
         const newId = genId();
         idMap[f.id] = newId;
-        data.folders.push({ id: newId, name: f.name, color: f.color || nextColor(data) });
+        data.folders.push({ id: newId, name: f.name, color: f.color || nextColor(data), parentId: null });
       }
+    }
+    // Second pass: wire up parent/child relationships for newly created
+    // folders, respecting the one-level rule. Anything that would violate
+    // it (parent itself has a parent, or the child already has children of
+    // its own) is simply left top-level rather than rejected.
+    for (const f of parsed.folders) {
+      if (!f.parentId) continue;
+      const newId = idMap[f.id];
+      const newParentId = idMap[f.parentId];
+      if (!newId || !newParentId || newId === newParentId) continue;
+      const folder = data.folders.find((x) => x.id === newId);
+      const parent = data.folders.find((x) => x.id === newParentId);
+      if (!folder || !parent || parent.parentId) continue;
+      if (folderHasChildren(data, newId)) continue;
+      folder.parentId = newParentId;
     }
     for (const [repo, folderIds] of Object.entries(parsed.assignments)) {
       const mapped = folderIds.map((fid) => idMap[fid]).filter(Boolean);
@@ -566,6 +636,8 @@
     setData,
     addFolder,
     reorderFolders,
+    setFolderParent,
+    getDisplayOrderedFolders,
     renameFolder,
     recolorFolder,
     deleteFolder,

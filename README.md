@@ -47,6 +47,10 @@ your browser except through Chrome's own sync mechanism (opt-in, see
 - **Keyboard shortcuts** — hover a repo and press 1-9 to toggle it into the
   Nth folder, with an optional required modifier key (Alt/Shift) configurable
   in Settings
+- **One level of sub-folders** — nest a folder under another (e.g. "Work" >
+  "Client A") from its `⋯` menu; filtering by a parent also matches its
+  children's repos, and the context menu/bulk-assign dropdown reflect the
+  hierarchy too
 
 ## Install (developer mode)
 

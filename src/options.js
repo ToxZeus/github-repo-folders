@@ -20,6 +20,7 @@
     shortcutsEnabled: document.getElementById("shortcutsEnabled"),
     shortcutsShowNumberBadges: document.getElementById("shortcutsShowNumberBadges"),
     shortcutsModifier: document.getElementById("shortcutsModifier"),
+    nestingDisplayStyle: document.getElementById("nestingDisplayStyle"),
     saveBtn: document.getElementById("saveBtn"),
     savedNote: document.getElementById("savedNote")
   };
@@ -103,6 +104,8 @@
     els.shortcutsEnabled.checked = settings.shortcuts.enabled;
     els.shortcutsShowNumberBadges.checked = settings.shortcuts.showNumberBadges;
     els.shortcutsModifier.value = settings.shortcuts.modifier;
+
+    els.nestingDisplayStyle.value = settings.nesting.displayStyle;
   }
 
   els.saveBtn.addEventListener("click", async () => {
@@ -132,6 +135,9 @@
         enabled: els.shortcutsEnabled.checked,
         showNumberBadges: els.shortcutsShowNumberBadges.checked,
         modifier: els.shortcutsModifier.value
+      },
+      nesting: {
+        displayStyle: els.nestingDisplayStyle.value
       }
     });
     loadedStoragePreference = next.storagePreference;

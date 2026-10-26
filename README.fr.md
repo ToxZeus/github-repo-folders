@@ -55,6 +55,10 @@ ci-dessous).
 - **Raccourcis clavier** — survole un repo et appuie sur 1-9 pour
   l'assigner au dossier correspondant, avec une touche modificatrice
   optionnelle (Alt/Maj) ajustable dans les Réglages
+- **Sous-dossiers sur un niveau** — imbrique un dossier sous un autre (ex:
+  « Travail » > « Client A ») depuis son menu `⋯` ; filtrer par un dossier
+  parent inclut aussi les repos de ses enfants, et le menu contextuel /
+  la liste déroulante des actions groupées reflètent aussi la hiérarchie
 
 ## Installation (mode développeur)
 

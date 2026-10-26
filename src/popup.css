@@ -84,6 +84,27 @@ body {
   margin: -2px 0 2px 22px;
 }
 
+.ghrf-folder-row-child {
+  margin-left: 22px;
+}
+
+.ghrf-folder-parent-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -2px 0 2px 22px;
+}
+
+.ghrf-parent-select {
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 11px;
+  padding: 0 4px;
+}
+
 .ghrf-new-folder {
   display: flex;
   flex-direction: column;

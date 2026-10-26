@@ -48,11 +48,11 @@
       folderListEl.appendChild(empty);
     }
 
-    data.folders.forEach((folder) => {
+    window.GHRF.getDisplayOrderedFolders(data.folders).forEach((folder) => {
       const count = Object.values(data.assignments).filter((ids) => ids.includes(folder.id)).length;
 
       const row = document.createElement("div");
-      row.className = "ghrf-folder-row";
+      row.className = "ghrf-folder-row" + (folder.parentId ? " ghrf-folder-row-child" : "");
 
       const colorBtn = document.createElement("button");
       colorBtn.type = "button";
@@ -97,6 +97,40 @@
       row.appendChild(delBtn);
 
       folderListEl.appendChild(row);
+
+      const hasChildren = data.folders.some((f) => f.parentId === folder.id);
+      const eligibleParents = data.folders.filter((f) => !f.parentId && f.id !== folder.id);
+      if (!hasChildren && eligibleParents.length > 0) {
+        const parentRow = document.createElement("div");
+        parentRow.className = "ghrf-folder-parent-row";
+
+        const parentLabel = document.createElement("span");
+        parentLabel.className = "ghrf-hint";
+        parentLabel.textContent = "Parent :";
+        parentRow.appendChild(parentLabel);
+
+        const parentSelect = document.createElement("select");
+        parentSelect.className = "ghrf-parent-select";
+        parentSelect.setAttribute("aria-label", `Dossier parent pour ${folder.name}`);
+        const noneOpt = document.createElement("option");
+        noneOpt.value = "";
+        noneOpt.textContent = "Aucun";
+        parentSelect.appendChild(noneOpt);
+        eligibleParents.forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name;
+          if (folder.parentId === p.id) opt.selected = true;
+          parentSelect.appendChild(opt);
+        });
+        parentSelect.addEventListener("change", async () => {
+          await window.GHRF.setFolderParent(folder.id, parentSelect.value || null);
+          render();
+        });
+        parentRow.appendChild(parentSelect);
+
+        folderListEl.appendChild(parentRow);
+      }
 
       const palette = document.createElement("div");
       palette.className = "ghrf-swatches ghrf-inline-swatches ghrf-hidden";
